@@ -45,9 +45,8 @@ When trying to start meshctl and this message appears:
 ```bash
 failed to parse local node configuration file local_node.json
 ```
-something went wrong during step 3 of installing bluez. Please repeat step 3.0 up to step 3.5 and the problem should be solved. If not, please redo all steps and try again.
+something went wrong during step 3 of installing bluez. Please repeat step 3.0 up to step 3.5 and the problem should be solved. If not, please redo steps 2.2, 2.5 - 3.5 (re-install bluez-5.50 and update kernel) and try again (be user to remove the bluez-5.50 directory first). If it still fails, try to redo the entire guide (first remove all).
 
 ## To do list
-- Add meshctl zephyr guide (@Frank)
 - Add explination about using bluepy to README (@Corstiaan)
 - Add program (using bluepy) to git (@Corstiaan)
