@@ -1,11 +1,12 @@
 # Project Plant Sensing System - Raspberry Pi Gateway
-This README shows how to install the important libraries, how to start bluez meshctl, and the possible problems and solutions with bluez.
+This README shows how to install the important libraries, how to start bluez meshctl, and the possible problems and solutions with bluez./
+In addition, the current status of this project and the to-do list are added below.
 
 ## Installing bluez and bluepy
-Step 1. Install bluez
+Step 1. Install bluez\
 Follow this guide to install bluez: "Tutorial-How-to-set-up-BlueZ.pdf"
 
-Step 2. Install bluepy
+Step 2. Install bluepy\
 Normally the bluepy is already installed on the Raspberry Pi.
 To be sure you have it installed, type the following command in the terminal:
 ```bash
@@ -13,7 +14,7 @@ sudo apt-get install python-pip libglib2.0-dev
 sudo pip install bluepy
 ```
 When not installed, you will be asked to install it. Otherwise, you will get a message that it is already installed or it is already the newest version. Then you are already good to go.
-For more information or if any problems occur, please refer to Ian Harvey's bluepy github at: https://github.com/IanHarvey/bluepy
+For more information or if any problems occur, please refer to Ian Harvey's bluepy repo at: https://github.com/IanHarvey/bluepy
 
 ## How to start bluez meshctl
 When bluez is installed correctly, meshctl can be found in the folder bluez-5.50/mesh. Please replace "5.50" by your version of bluez.
@@ -40,13 +41,28 @@ In addition, a step-by-step guide with pictures ("Step-by-step-guide-meshctl-wit
 ## Possible problems and solutions with bluez
 The following list gives all possible problems that could occur after installing or after changing some files from bluez:
 
-1. local_node.json
+1. local_node.json\
 When trying to start meshctl and this message appears:
 ```bash
 failed to parse local node configuration file local_node.json
 ```
 something went wrong during step 3 of installing bluez. Please repeat step 3.0 up to step 3.5 and the problem should be solved. If not, please redo steps 2.2, 2.5 - 3.5 (re-install bluez-5.50 and update kernel) and try again (be user to remove the bluez-5.50 directory first). If it still fails, try to redo the entire guide (first remove all).
 
-## To do list
-- Add explination about using bluepy to README (@Corstiaan)
-- Add program (using bluepy) to git (@Corstiaan)
+## Current status of the project
+1. bluez meshctl\
+- bluez meshctl on the Raspberry Pi is working with multiple nRF52-DKs. It was tested with 3 different devices (all running Zephyr.hex), but it should be possible to use more.
+
+2. bluepy\
+- <update @Corstiaan>
+
+## To-do list
+- Add explination about using bluepy to README + update README (@Corstiaan) -- remove this when done
+- Add program (using bluepy) to repo (@Corstiaan) -- remove this when done
+\
+bluez:\
+- Research into the specific meaning and syntax of steps 10 to 13 in the bluez mesctl with Zephyr guide;
+- Research into the useability of all other commands from meshctl (after starting meshctl type: "help" without "s in all menus); and
+- Research into using Zephyr RTOS for creating BLE mesh nodes on the nRF52-DKs (see node repo of this project).
+\
+bluepy:\
+- <update @Corstiaan>
