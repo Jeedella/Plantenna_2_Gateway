@@ -49,20 +49,20 @@ failed to parse local node configuration file local_node.json
 something went wrong during step 3 of installing bluez. Please repeat step 3.0 up to step 3.5 and the problem should be solved. If not, please redo steps 2.2, 2.5 - 3.5 (re-install bluez-5.50 and update kernel) and try again (be user to remove the bluez-5.50 directory first). If it still fails, try to redo the entire guide (first remove all).
 
 ## Current status of the project
-1. bluez meshctl\
-- bluez meshctl on the Raspberry Pi is working with multiple nRF52-DKs. It was tested with 3 different devices (all running Zephyr.hex), but it should be possible to use more.
+1. bluez meshctl
+- bluez meshctl on the Raspberry Pi is working with multiple nRF52-DKs. It was tested with 3 different devices (all running Zephyr.hex), but it should be possible to use more.\
 
-2. bluepy\
+2. bluepy
 - <update @Corstiaan>
 
 ## To-do list
 - Add explination about using bluepy to README + update README (@Corstiaan) -- remove this when done
-- Add program (using bluepy) to repo (@Corstiaan) -- remove this when done
+- Add program (using bluepy) to repo (@Corstiaan) -- remove this when done\
 \
-bluez:\
+bluez:
 - Research into the specific meaning and syntax of steps 10 to 13 in the bluez mesctl with Zephyr guide;
 - Research into the useability of all other commands from meshctl (after starting meshctl type: "help" without "s in all menus); and
-- Research into using Zephyr RTOS for creating BLE mesh nodes on the nRF52-DKs (see node repo of this project).
+- Research into using Zephyr RTOS for creating BLE mesh nodes on the nRF52-DKs (see node repo of this project).\
 \
-bluepy:\
+bluepy:
 - <update @Corstiaan>
