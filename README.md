@@ -53,11 +53,10 @@ something went wrong during step 3 of installing bluez. Please repeat step 3.0 u
 - bluez meshctl on the Raspberry Pi is working with multiple nRF52-DKs. It was tested with 3 different devices (all running Zephyr.hex), but it should be possible to use more.\
 
 2. bluepy
-- <update @Corstiaan>
+- Connection between NRF52 and Raspberry Pi has been fully established and tested. Any program that utilizes Bluetooth LE loaded to the NRF52 can be controlled by the Raspberry Pi as long as the correct UUID's are used in the python code. Connecting the Pi to the AWS IoT server has also been proved successfull, but controlling the NRF52 through connection with the Pi on AWS could not be achieved.  
 
 ## To-do list
-- Add explination about using bluepy to README + update README (@Corstiaan) -- remove this when done
-- Add program (using bluepy) to repo (@Corstiaan) -- remove this when done\
+- Add explanation about using bluepy to README + update README (@Corstiaan) -- remove this when done\
 \
 bluez:
 - Research into the specific meaning and syntax of steps 10 to 13 in the bluez mesctl with Zephyr guide;
@@ -65,4 +64,5 @@ bluez:
 - Research into using Zephyr RTOS for creating BLE mesh nodes on the nRF52-DKs (see node repo of this project).\
 \
 bluepy:
-- <update @Corstiaan>
+- Research into how to achieve control over the NRF52 through the AWS IoT server using the Pi as a gateway. The file "NRF52Rpi_BLE_ChargeCapModel_IoT.py" is the code thought to be able to achieve this, but failed. It was loaded onto AWS, connection with the Pi was established, but no response came from the pi in the shape of messages, nor did the NRF52 indicate connection was being made with the Pi. The file is an attempt at integrating both the basic AWS readout code (greengrassHelloWorld) and the ChargeCapModel pi code into one. (see IoT repo of this project for more info); and
+- Research into whether Bluetooth LE mesh is possible using the type of bluetooth pairing bluepy makes use of.\
