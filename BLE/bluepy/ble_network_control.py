@@ -1,17 +1,17 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     November 4th, 2020                                #
-# version:  1.2                                               #
+# date:     November 5th, 2020                                #
+# version:  1.3                                               #
 #                                                             #
 # version info:                                               #
-# - Can no longer search for Short Local Name                 #
-# - Update my_ble_names                                       #
-# - Change add/delete/get_peripherals() and get_addresses()   #
-#   for single peripheral/address (not in a list)             #
-# - Remove function _print_services_and_tasks()               #
-# - Add duplicate protection                                  #
-# - Implement reading tasks                                   #
+# - Change __init__ of BLE_network class. Now it searches for #
+#   devices when the __init__ is called, instead of adding a  #
+#   new device to the network.                                #
+# - Add scan method to BLE network class.                     #
+# - Add device type and availableTasks to spms_ble_names.     #
+# - Devices are founc by device type (Complete 128b Services) #
+#   instead of Complete Local Name.                           #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -29,16 +29,37 @@ import sys, binascii
 ###################
 
 # my dictionary of uuids (services and tasks)
-my_ble_names = {
+spms_ble_names = {
+    ## device types ##
+    # UUID (key)                            Device type (value)
+    "1a310001-63b2-0795-204f-1dda0100d29d": "spms_device",        # 128-bit UUID (not a service, not a task, it is indication)
+    
+    ## availeble tasks ##
+    "1a31fff1-63b2-0795-204f-1dda0100d29d": "availableTasks service", # Not used yet
+    "1a31fff2-63b2-0795-204f-1dda0100d29d": "availableTasks task",    # Not used yet
+    
+    
     ## Services ##
-    # UUID                                  Service name
+    # UUID (key)                            Service name (value)
     "1a310701-63b2-0795-204f-1dda0100d29d": "Portable Airflow service",
     
     ## Tasks/Characteristics ##
-    # UUID                                  Task name
+    # UUID (key)                            Task name (value)
     "1a310702-63b2-0795-204f-1dda0100d29d": "Portable Airflow task",
 }
 
+
+#spms_ble_data = [] # Not needed for ble, but maybe for database
+'''
+startIndexes and sizes:
+    "Manufacturing specific size":          startIndex = 0, size = 1
+    " AD type manufecturing specific":      startIndex = 1, size = 1
+    "Company ID":                           startIndex = 2, size = 2
+    "Temperature":                          startIndex = 4, size = 1
+    "Hymidity":                             etc.
+    "Pressure":                             etc.
+    etc.
+'''
 
 ###############
 ### Classes ###
@@ -73,6 +94,17 @@ class BLE_network:
     
     methods
     -------
+    - scanning
+    scan_for_new_ble_devices(self, device_type, scan_time = 10.0):
+        Scan for new ble devices and asks user to add device to ble network
+        device_type must be of type string
+        scan_time default value is 10.0 seconds
+        
+    __scan_for_ble_devices(self, device_type, scan_time = 10.0):
+        Scan all for all ble devices. It returns a list containing all found ble devices.
+        device_type must be of type string.
+        scan_time default value is 10.0 seconds
+    
     - peripherals
     add_peripherals(self, peripheral)
         Add one or mutliple peripherals
@@ -92,11 +124,11 @@ class BLE_network:
     
     
     - task control
-    read_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
-        Read one or multiple tasks of one or multiple peripherals
+    save_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
+        Save one or multiple tasks of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
         service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
-        type of return value depends on the task'
+        type of return value depends on the task
 
     write_tasks(self, value, peripheral_addr = None, service_uuid = None, task_uuid = None)
         Write 'value' to all, one or multiple tasks of one or multiple peripherals
@@ -106,10 +138,10 @@ class BLE_network:
         < NOTE: Not implemented yet >
         
     __save_tasks(self, peripheral, service_uuid = None, task_uuid = None):
-        Save tasks in the memory (currently only printed for debug purposes)
+        '''Save tasks in the memory (currently only printed for debug purposes)
         peripheral must be of type Peripheral
         service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
-        Note: When a service/task is not part of the current peripheral/service, it is ignored.
+        Note: When a service/task is not part of the current peripheral/service, it is ignored
     
     ------
 
@@ -123,23 +155,18 @@ class BLE_network:
     
     
     # consturctor #
-    def __init__(self, network_ID, peripheral = None):
-        '''Initialize a dictionary of peripherals.
-       network_ID should not be of type None. Any other type is acceptable.
-       peripheral must be of type None, Peripheral, or list of Peripheral'''
-        if (peripheral is None):
-            self.__netID = network_ID
-            self.__peripherals = {}
-            print("Created network with network ID: '%s'" %self.netID)
-            print("    Empty dictionary of peripherals has been created")
-        elif (isinstance(peripheral, Peripheral) or isinstance(peripheral, list)):
-            self.__netID = network_ID
-            print("Created network with network ID: '%s'" %self.netID)
-            
-            self.__peripherals = {}
-            self.add_peripherals(peripheral)
-        else:
-            print("ERROR while trying to add peripherals: peripheral is of wrong type (type = %s). Valid types: None, Peripheral, list (of Peripheral)" %type(peripheral))
+    def __init__(self, network_ID, device_type, scan_time = 10.0):
+        '''Initialize a dictionary of peripherals and scan for ble device to add to this network
+        network_ID should not be of type None. Any other type is acceptable
+        device_type must be of type string
+        scan_time default value is 10.0 seconds'''
+        
+        # network ID and empty peripheral dictionary
+        self.__netID = network_ID
+        self.__peripherals = {}
+        
+        # Scan for (new) ble devices
+        self.scan_for_new_ble_devices(device_type, scan_time)
         
         print('')
         return
@@ -150,10 +177,86 @@ class BLE_network:
         print("BLE network '%s' has been deleted." %self.netID)
         return
     
+    
     # methods #
+    # scanning
+    def scan_for_new_ble_devices(self, device_type, scan_time = 10.0):
+        '''Scan for new ble devices and asks user to add device to ble network
+        device_type must be of type string
+        scan_time default value is 10.0 seconds'''
+        # Scan for ble devices with name = device_type
+        sce_devices = self.__scan_for_ble_devices(device_type, scan_time)
+        
+        # Check if sce_device is empty (no valid devices found)
+        if len(sce_devices) == 0:
+            print("No valid devices found (searched for device name: '%s'). Make sure the device is turned on and the correct device_type is searched for." %device_type)
+            return
+        
+        # Only add non duplicates to network
+        for sce_device in sce_devices:
+            # Create Preripheral object from scanEntry object
+            p_device = Peripheral(sce_device.addr, sce_device.addrType, sce_device.iface)
+            
+            # Check duplicate
+            if p_device in self.__peripherals:
+                # Duplicate
+                print("Duplicate is ignored (MAC address=%s)." %p_devcie.addr)
+            else:
+                # Non duplicate
+                response = raw_input("Do you want to connect to device with MAC address %s? [y/N] " % p_device.addr).lower()
+                if response == "y" or response == "yes": # Accapted connection
+                    print("Connecting to device with MAC address %s" % p_device.addr)
+                    self.add_peripherals(p_device)
+                else: # Declined connection
+                    print("You did not connect to device '%s' with MAC address %s" %(device_type, p_device.addr))
+                    continue #skip this device/peripheral
+        
+        return
+    
+    def __scan_for_ble_devices(self, device_type, scan_time = 10.0):
+        '''Scan all for all ble devices. It returns a list containing all found ble devices.
+        device_type must be of type string.
+        scan_time default value is 10.0 seconds.'''
+        
+        # Check if device_type is specified
+        if device_type is None:
+            print("ERROR while trying to scan for ble devices: device_type is not specified. Please try again.")
+            return
+        
+        scanner = Scanner().withDelegate(_ScanDelegate())
+        sc_devices = scanner.scan(scan_time)    # Scan for specified time (in seconds) default = 10.0 seconds
+
+        # Create empty list of sce_devices (objects of ScanEntry class)
+        sce_devices = []
+        
+        for device in sc_devices:
+            valid_device = False
+            print("Device %s (%s), RSSI=%d dB" % (device.addr, device.addrType, device.rssi))
+            
+            # Display all adtype, desc and value of current device
+            for (adtype, desc, value) in device.getScanData():
+                if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
+                    print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special sprint
+                    
+                    valid_device = True;    # Valid device is found (works only for the first device called "Nordic_Blinky"
+                    print("Found valid device!")
+                    sce_devices.append(device)
+                else:
+                    print("  %s    %s = %s" % (hex(adtype), desc, value)) # normal print
+
+            # save + print correct device address
+            if valid_device:
+                print("MAC address valid device: %s\n" %  device.addr)
+            else:
+                print("Not a valid device!\n")
+
+        return sce_devices
+    
+    # peripherals
     def add_peripherals(self, peripheral):
         '''Add one or mutliple peripherals
         peripheral must be of type Peripheral (one) or list (one or multiple)'''
+        
         # Convert to list
         if (isinstance(peripheral, Peripheral)):
             peripheral = [peripheral]
@@ -266,8 +369,8 @@ class BLE_network:
         return addr
     
     # task control
-    def read_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
-        '''Read one or multiple tasks of one or multiple peripherals
+    def save_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
+        '''Save one or multiple tasks of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
         service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
         type of return value depends on the task'''
@@ -315,12 +418,12 @@ class BLE_network:
         '''Save tasks in the memory (currently only printed for debug purposes)
         peripheral must be of type Peripheral
         service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
-        Note: When a service/task is not part of the current peripheral/service, it is ignored.'''
+        Note: When a service/task is not part of the current peripheral/service, it is ignored'''
         
         # Convert to list
         if service_uuid == None:
             service_uuid = []
-            for service in self.__peripherals[peripheral.addr].getServices():
+            for service in peripherals.getServices():
                 service_uuid.append(service.uuid)
         elif isinstance(service_uuid, str):
             service_uuid = [service_uuid]
@@ -328,7 +431,7 @@ class BLE_network:
         # Convert to list
         if task_uuid == None:
             task_uuid = []
-            for task in self.__peripherals[peripheral.addr].getCharacteristics():
+            for task in peripherals.getCharacteristics():
                 task_uuid.append(task.uuid)
         elif isinstance(task_uuid, str):
             task_uuid = [task_uuid]
@@ -342,16 +445,15 @@ class BLE_network:
         service_uuid = list(dict.fromkeys(service_uuid))
         task_uuid    = list(dict.fromkeys(task_uuid))
         
-            
-        print('')
+        
         # Print specified services
-        print("Services and Charactertic uuids of device '%s':" % peripheral.addr)
+        print("Services and Charactertic uuids of device '%s':" %peripheral.addr)
 
         
         # Save services
         for se_service in peripheral.getServices():
             if (se_service.uuid not in service_uuid):
-                continue;    # Skip this sevice
+                continue    # Skip this sevice
             
             chars = False                # More than 0 tasks?
             firstTask = True             # Fisrt task?
@@ -385,12 +487,13 @@ class BLE_network:
                 # Read task if it supports read
                 if(ch_task.supportsRead()):
                     # Task is readable => Read + print value
-                    str_in = ch_task.read()
-                    print("        Current value: %s" % binascii.b2a_hex(ch_task.read()))
-                    
-                    ############################################################
-                    # HERE: Save task value (include perihperal, service, etc) #
-                    ############################################################
+                    val = ch_task.read()
+                    print("        Current value: %s" % binascii.b2a_hex(val))
+                    if binascii.b2a_hex(val[-1:]) >= "77": # isReady = 0xFF --> is ready to read
+                        # SAVE HERE
+                        print("        Saved! (LBS=%s)" % binascii.b2a_hex(val[-1:]))
+                    else: # ignore read value, because isRead = 0x00 (< 0x77) --> is not ready to read
+                        print("        Ignored! (LBS=%s)" % binascii.b2a_hex(val[-1:]))
 
                 else:
                     # Not readable
@@ -404,44 +507,11 @@ class BLE_network:
 
 
 
-#################
-### Functions ###
-#################
+########################
+### Global functions ###
+########################
 
 def getNameByUUID(uuid):
-    '''Return the name (str) of a uuid. If the uuid is listed in the bluepy Assigned Numbers list or my_ble_names list it will be a human-readable name. Otherwise, it returns the given uuid (str).
+    '''Return the name (str) of a uuid. If the uuid is listed in the bluepy Assigned Numbers list or spms_ble_names list it will be a human-readable name. Otherwise, it returns the given uuid (str).
     (bluepy Assignment Numbers (str) can be found here: https://ianharvey.github.io/bluepy-doc/assignednumbers.html#assignednumbers)'''
-    return my_ble_names.get(str(uuid), UUID(uuid).getCommonName())
-
-
-def scan_for_ble_devices(scan_time = 10.0, local_device_name = None):
-    '''Scan all for all ble devices. It returns a list of all found ble devices.'''
-    
-    if local_device_name is None:
-        return
-    
-    scanner = Scanner().withDelegate(_ScanDelegate())
-    sc_devices = scanner.scan(scan_time)    # Scan for specified time (in seconds) default = 10.0 seconds
-
-    # Variables for copies of MAC_addr and device of correct device
-    se_device = None
-    
-    for dev in sc_devices:
-        valid_device = False
-        print("Device %s (%s), RSSI=%d dB" % (dev.addr, dev.addrType, dev.rssi))
-        
-        # Display all adtype, desc and value of current device
-        for (adtype, desc, value) in dev.getScanData():
-            print("  %s    %s = %s" % (hex(adtype), desc, value))
-            if desc == "Complete Local Name" and value == local_device_name:
-                valid_device = True;    # Valid device is found (works only for the first device called "Nordic_Blinky"
-                print("Found valid device!")
-                se_device = dev
-
-        # save + print correct device address
-        if valid_device:
-            print("MAC address valid device: %s\n" %  dev.addr)
-        else:
-            print("Not a valid device!\n")
-
-    return se_device
+    return spms_ble_names.get(str(uuid), UUID(uuid).getCommonName())
