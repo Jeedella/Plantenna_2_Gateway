@@ -1,6 +1,6 @@
 # Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE network based on the bluepy library
-This README shows how to install the important libraries and how to work with bluepy./
-In addition, the current status of the gateway using bluepy and a to-do list are added below./
+This README shows how to install the important libraries and how to work with bluepy.\
+In addition, the current status of the gateway using bluepy and a to-do list are added below.\
 NOTE: Throughout this part of the project, Python version 2.7 was used. To check your current Python version, use the command:
 ```bash
 python --version

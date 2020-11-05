@@ -1,5 +1,5 @@
 # Project Plant Sensing System - Raspberry Pi Gateway - BLE network based on bluez
-This README shows how to install the important libraries, how to start bluez meshctl, and the possible problems and solutions with bluez./
+This README shows how to install the important libraries, how to start bluez meshctl, and the possible problems and solutions with bluez.\
 In addition, the current status of the gateway using bluez and the to-do list are added below.
 
 ## Installing bluez
