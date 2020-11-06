@@ -1,5 +1,5 @@
 ###############################################################
-# control_my_ble_network.py                                   #
+# main_network_control.py                                     #
 # author:   Frank Arts                                        #
 # date:     November 6th, 2020                                #
 # version:  1.1                                               #
