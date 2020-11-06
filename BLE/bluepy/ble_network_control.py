@@ -1,21 +1,16 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     November 5th, 2020                                #
-# version:  1.3                                               #
+# date:     November 6th, 2020                                #
+# version:  1.4                                               #
 #                                                             #
-# version info:                                               #
-# - Change __init__ of BLE_network class. Now it searches for #
-#   devices when the __init__ is called, instead of adding a  #
-#   new device to the network.                                #
-# - Add scan method to BLE network class.                     #
-# - Add device type and availableTasks to spms_ble_names.     #
-# - Devices are founc by device type (Complete 128b Services) #
-#   instead of Complete Local Name.                           #
+# version information:                                        #
+# - Writing to tasks is now supported.                        #
+# - Add method __write_tasks_for_one_periheral()              #
+# - Remove method get_addresses()                             #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
-# - Writing to tasks is not yet supported                     #
 ###############################################################
 
 # import
@@ -49,18 +44,6 @@ spms_ble_names = {
 }
 
 
-#spms_ble_data = [] # Not needed for ble, but maybe for database
-'''
-startIndexes and sizes:
-    "Manufacturing specific size":          startIndex = 0, size = 1
-    " AD type manufecturing specific":      startIndex = 1, size = 1
-    "Company ID":                           startIndex = 2, size = 2
-    "Temperature":                          startIndex = 4, size = 1
-    "Hymidity":                             etc.
-    "Pressure":                             etc.
-    etc.
-'''
-
 ###############
 ### Classes ###
 ###############
@@ -81,8 +64,7 @@ class BLE_network:
     """
     BLE network class
     < UNDER DEVELOPMENT >
-    This class contains of one or multiple peripherals (= node = profile)
-    These peripherals should be gathered using the bluepy library (https://github.com/IanHarvey/bluepy)
+    This class contains of one or multiple peripherals (= device = node = profile)
     
     ...
     
@@ -118,30 +100,31 @@ class BLE_network:
         Return a list containing the Peripherals of all peripherals or specified peripheral(s)
         peripheral must be of type None (all), Periperheral (one) or list (one or multiple)
     
-    get_addresses(self, peripheral_addr = None)
-        Return a list containing the addresses of all peripherals or specified peripheral(s)
-        peripheral_addr must be of type None (all), unicode (one) or list (one or multiple)
-    
     
     - task control
     save_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
         Save one or multiple tasks of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
-        service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
         type of return value depends on the task
-
-    write_tasks(self, value, peripheral_addr = None, service_uuid = None, task_uuid = None)
-        Write 'value' to all, one or multiple tasks of one or multiple peripherals
-        value must be the same type as task (i.e. int, float, str)
-        peripheral_addr must be of type None, unicode (one) or list (one or multiple)
-        service_uuid and task_uuid must be of type None, str (one) or list (one or multiple)
-        < NOTE: Not implemented yet >
         
-    __save_tasks(self, peripheral, service_uuid = None, task_uuid = None):
-        '''Save tasks in the memory (currently only printed for debug purposes)
+    __save_tasks_for_one_peripheral(self, peripheral, service_uuid = None, task_uuid = None):
+        Save tasks in the memory for one (1) peripheral (currently only printed for debug purposes)
         peripheral must be of type Peripheral
-        service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
         Note: When a service/task is not part of the current peripheral/service, it is ignored
+
+    write_tasks(self, value, peripheral = None, service_uuid = None, task_uuid = None)
+        Write 'value' to one or multiple tasks of one or multiple peripherals
+        value must be of type str
+        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
+        
+    __write_tasks_for_one_peripheral(self, peripheral, service_uuid = None, task_uuid = None):
+        Write 'value' to all, one or multiple tasks of one (1) peripherals (currently with random values for debug purposes)
+        value must be of type str
+        peripheral must be of type Peripheral
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
     
     ------
 
@@ -190,6 +173,7 @@ class BLE_network:
         # Check if sce_device is empty (no valid devices found)
         if len(sce_devices) == 0:
             print("No valid devices found (searched for device name: '%s'). Make sure the device is turned on and the correct device_type is searched for." %device_type)
+            print('')
             return
         
         # Only add non duplicates to network
@@ -211,6 +195,7 @@ class BLE_network:
                     print("You did not connect to device '%s' with MAC address %s" %(device_type, p_device.addr))
                     continue #skip this device/peripheral
         
+        print('')
         return
     
     def __scan_for_ble_devices(self, device_type, scan_time = 10.0):
@@ -234,9 +219,9 @@ class BLE_network:
             print("Device %s (%s), RSSI=%d dB" % (device.addr, device.addrType, device.rssi))
             
             # Display all adtype, desc and value of current device
-            for (adtype, desc, value) in device.getScanData():
+            for (adtype, desc, value) in device.getScanData(): # adtype (flag), descriptor, value
                 if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
-                    print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special sprint
+                    print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special print
                     
                     valid_device = True;    # Valid device is found (works only for the first device called "Nordic_Blinky"
                     print("Found valid device!")
@@ -339,47 +324,18 @@ class BLE_network:
             print("ERROR while trying to get peripherals: peripheral is of wrong type (type = %s). Valid types: None, unicode, list (of unicode)" %type(peripheral))
         
         return p
-    
-    def get_addresses(self, peripheral_addr = None):
-        '''Return a list containing the addresses of all peripherals or specified peripheral(s)
-        peripheral_addr must be of type unicode (one) or list (one or multiple)'''
-        addr = []
-                
-        # Convert to list
-        if (isinstance(peripheral_addr, unicode)):
-            peripheral_addr = [peripheral_addr]
-            
-        
-        # Get
-        if (peripheral_addr == None):
-            addr = self.__peripherals.keys()
-        elif (isinstance(peripheral_addr, list)):
-            # Remove duplicates
-            peripheral_addr = list(dict.fromkeys(peripheral_addr))
-            
-            for i in range(len(peripheral_addr)):
-                val = self.__peripherals.get(peripheral_addr[i], "not in list")
-                if (val == "not in list"):
-                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %s(peripheral_addr[i], self.netID))
-                else:
-                    addr.append(val.addr)
-        else:
-            print("ERROR while trying to get peripherals: peripheral is of wrong type (type = %s). Valid types: None, unicode, list (of unicode)" %type(peripheral_addr))
-        
-        return addr
+
     
     # task control
     def save_tasks(self, peripheral = None, service_uuid = None, task_uuid = None):
         '''Save one or multiple tasks of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
-        service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
         type of return value depends on the task'''
                 
         # Convert to list
         if peripheral is None:
-            peripheral = [];
-            for key, value in self.__peripherals.items():
-                peripheral.append(value)
+            peripheral = self.__peripherals.values()
         elif isinstance(peripheral, Peripheral):
             peripheral = [peripheral]
             
@@ -392,53 +348,47 @@ class BLE_network:
             for i in range(len(peripheral)):
                 addr = self.__peripherals.get(peripheral[i].addr, "not in list")
                 if (addr == "not in list"):
-                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %s(peripheral[i].addr, self.netID))
+                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %(peripheral[i].addr, self.netID))
                     print("task(s) for this peripheral will not be read")
                 else:
                     # read tasks
-                    self.__save_tasks(peripheral[i], service_uuid, task_uuid)
+                    self.__save_tasks_for_one_peripheral(peripheral[i], service_uuid, task_uuid)
         else:
-            print("ERROR while trying to save tasks: wrong type for peripheral (type = %s) or services (type = %s) or tasks (type = %s). Valid type for peripheral: None, Peripheral or list, valid types for services and tasks: list, None" %(type(peripheral), type(services), type(tasks)))
+            print("ERROR while trying to save tasks: peripheral is of wrong type (type = %s). Valid type: None, Peripheral or list" %type(peripheral))
         
         print('')
-        return
-
-    def write_tasks(self, value, peripheral_addr = None, service_uuid = None, task_uuid = None):
-        '''Write 'value' to one or multiple tasks of one or multiple peripherals
-        value must be the same type as task (i.e. int, float, str)
-        peripheral_addr must be of type None (all), unicode (one) or list (one or multiple)
-        service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
-        < NOTE: Not implemented yet >'''
-        print("< Write peripheral is not implemented yet >")
-        print('')
-        
         return
     
-    def __save_tasks(self, peripheral, service_uuid = None, task_uuid = None):
-        '''Save tasks in the memory (currently only printed for debug purposes)
+    def __save_tasks_for_one_peripheral(self, peripheral, service_uuid = None, task_uuid = None):
+        '''Save tasks in the memory for one (1) peripheral (currently only printed for debug purposes)
         peripheral must be of type Peripheral
-        service_uuid and task_uuid must be of type None (all), str (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
         Note: When a service/task is not part of the current peripheral/service, it is ignored'''
         
         # Convert to list
         if service_uuid == None:
             service_uuid = []
-            for service in peripherals.getServices():
+            for service in peripheral.getServices():
                 service_uuid.append(service.uuid)
-        elif isinstance(service_uuid, str):
+        elif isinstance(service_uuid, str) or isinstance(service_uuid, unicode):
             service_uuid = [service_uuid]
+        elif not isinstance(service_uuid, list):
+            print("ERROR while trying to save tasks: service_uuid is of wrong type (type = %s). Valid types: None, str, unicode or list" %type(service_uuid))
+            return
         
         # Convert to list
         if task_uuid == None:
             task_uuid = []
-            for task in peripherals.getCharacteristics():
+            for task in peripheral.getCharacteristics():
                 task_uuid.append(task.uuid)
         elif isinstance(task_uuid, str):
             task_uuid = [task_uuid]
+        elif not isinstance(task_uuid, list):
+            print("ERROR while trying to save tasks: task_uuid is of wrong type (type = %s). Valid types: None, str, unicode or list" %type(task_uuid))
+            return
         
-        
-        if (not isinstance(peripheral, Peripheral) and not isinstance(services, list) and not isinstance(tasks, list)):
-            print("ERROR while trying to save tasks: wrong type for peripheral (type = %s) or services (type = %s) or tasks (type = %s). Valid type for peripheral: Peripheral, valid types for services and tasks: list" %(type(peripheral), type(services), type(tasks)))
+        if not isinstance(peripheral, Peripheral):
+            print("ERROR while trying to save tasks: peripheral is of wrong type (type = %s). Valid type: Peripheral" %type(peripheral))
             return
         
         # Remove duplicates
@@ -446,11 +396,11 @@ class BLE_network:
         task_uuid    = list(dict.fromkeys(task_uuid))
         
         
-        # Print specified services
+        # Print device address
         print("Services and Charactertic uuids of device '%s':" %peripheral.addr)
 
         
-        # Save services
+        # Get services
         for se_service in peripheral.getServices():
             if (se_service.uuid not in service_uuid):
                 continue    # Skip this sevice
@@ -459,29 +409,30 @@ class BLE_network:
             firstTask = True             # Fisrt task?
             
             # Save tasks
-            for ch_task in se_service.getCharacteristics():    # Create object of task class (for every task in se_ object of service class)
+            for ch_task in se_service.getCharacteristics():
                 chars = True
                 
                 if (ch_task.uuid not in task_uuid):
                     continue;    # Skip this task
                 
                 if firstTask:
-                    # Print services
+                    # Print current service
                     print("Service:")
-                    uuid = se_service.uuid       # Get uuid
-                    print(getNameByUUID(uuid))   # Print service name (string)
-                    print("(uuid=%s)" %uuid)     # Print uuid
+                    uuid = se_service.uuid
+                    print(getNameByUUID(uuid))
+                    print("(uuid=%s)" %uuid)
 
                     print("    Tasks:")
                     firstTask = False
                 
-                uuid = ch_task.uuid          # Get uuid
+                # Print current task
+                uuid = ch_task.uuid
                 task_name = getNameByUUID(uuid)
-                print("    %s" %task_name)   # Print task name (string)
+                print("    %s" %task_name)
                 print("      (uuid=%s)" %uuid)
                 
                 
-                # Show properties:
+                # Show properties
                 print("      %s" %ch_task.propertiesToString())
                         
                 # Read task if it supports read
@@ -497,10 +448,139 @@ class BLE_network:
 
                 else:
                     # Not readable
-                    print("        Task '%s' is not readble" %getNameByUUID(ch_task.uuid))
+                    print("        Task '%s' (uuid=%s) is not readble" %(getNameByUUID(ch_task.uuid), ch_task.uuid))
 
             if (chars is False):
-                print("    Service '%s' (with uiid=%s) has no tasks" %(getNameByUUID(se_service.uuid), se_service.uuid))
+                print("    Service '%s' (uiid=%s) has no tasks" %(getNameByUUID(se_service.uuid), se_service.uuid))
+            print('')
+            
+        return
+    
+    def write_tasks(self, value, peripheral = None, service_uuid = None, task_uuid = None):
+        '''Write 'value' to one or multiple tasks of one or multiple peripherals
+        value must be of type str
+        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)'''
+        
+        # Check type of value
+        if not isinstance(value, str):
+            print("ERROR while trying to write tasks: value (%s) is of wrong type (type = %s). Valid type: int or str" %(value, type(value)))
+            print('')
+            return
+        
+        # Convert to list
+        if peripheral is None:
+            peripheral = self.__peripherals.values()
+        elif isinstance(peripheral, Peripheral):
+            peripheral = [peripheral]
+            
+        
+        # Write
+        if (isinstance(peripheral, list)):
+            # Remove duplicates
+            peripheral = list(dict.fromkeys(peripheral))
+            
+            for i in range(len(peripheral)):
+                addr = self.__peripherals.get(peripheral[i].addr, "not in list")
+                if (addr == "not in list"):
+                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %(peripheral[i].addr, self.netID))
+                    print("task(s) for this peripheral will not be written")
+                else:
+                    # write tasks
+                    self.__write_tasks_for_one_peripheral(value, peripheral[i], service_uuid, task_uuid)
+        else:
+            print("ERROR while trying to write tasks: peripheral is of wrong type (type = %s). Valid type: None, Peripheral or list" %type(peripheral))
+        
+        print('')
+        return
+    
+    def __write_tasks_for_one_peripheral(self, value, peripheral, service_uuid = None, task_uuid = None):
+        '''Write 'value' to all, one or multiple tasks of one (1) peripherals (currently with random values for debug purposes)
+        value must be of type str
+        peripheral must be of type Peripheral
+        service_uuid and task_uuid must be of type None (all), str/unicode (one) or list (one or multiple)'''
+        
+        # Convert to list
+        if service_uuid == None:
+            service_uuid = []
+            for service in peripheral.getServices():
+                service_uuid.append(service.uuid)
+        elif isinstance(service_uuid, str) or isinstance(service_uuid, unicode):
+            service_uuid = [service_uuid]
+        elif not isinstance(service_uuid, list):
+            print("ERROR while trying to save tasks: service_uuid is of wrong type (type = %s). Valid types: None, str, unicode or list" %type(service_uuid))
+            return
+        
+        # Convert to list
+        if task_uuid == None:
+            task_uuid = []
+            for task in peripheral.getCharacteristics():
+                task_uuid.append(task.uuid)
+        elif isinstance(task_uuid, str):
+            task_uuid = [task_uuid]
+        elif not isinstance(task_uuid, list):
+            print("ERROR while trying to save tasks: task_uuid is of wrong type (type = %s). Valid types: None, str, unicode or list" %type(task_uuid))
+            return
+        
+        if not isinstance(peripheral, Peripheral):
+            print("ERROR while trying to save tasks: peripheral is of wrong type (type = %s). Valid type: Peripheral" %type(peripheral))
+            return
+        
+        # Remove duplicates
+        service_uuid = list(dict.fromkeys(service_uuid))
+        task_uuid    = list(dict.fromkeys(task_uuid))
+        
+        
+        # Print device address
+        print("Services and Charactertic uuids of device '%s':" %peripheral.addr)
+
+        
+        # Get services
+        for se_service in peripheral.getServices():
+            if (se_service.uuid not in service_uuid):
+                continue    # Skip this sevice
+            
+            chars = False                # More than 0 tasks?
+            firstTask = True             # Fisrt task?
+            
+            # Save tasks
+            for ch_task in se_service.getCharacteristics():
+                chars = True
+                
+                if (ch_task.uuid not in task_uuid):
+                    continue;    # Skip this task
+                
+                if firstTask:
+                    # Print current service
+                    print("Service:")
+                    uuid = se_service.uuid
+                    print(getNameByUUID(uuid))
+                    print("(uuid=%s)" %uuid)
+
+                    print("    Tasks:")
+                    firstTask = False
+                
+                # Print current task
+                uuid = ch_task.uuid
+                task_name = getNameByUUID(uuid)
+                print("    %s" %task_name)
+                print("      (uuid=%s)" %uuid)
+                
+                
+                # Show properties
+                print("      %s" %ch_task.propertiesToString())
+                        
+                # Write task if it supports writing
+                if (ch_task.properties & ch_task.props["WRITE"]):
+                    # Task is readable => Write + print written value
+                    ch_task.write(value)
+                    print("        Written value: %s" %repr(value))
+                else:
+                    # Not readable
+                    print("        Task '%s' (uuid=%s) is not writable" %(getNameByUUID(ch_task.uuid), ch_task.uuid))
+
+            if (chars is False):
+                print("    Service '%s' (uiid=%s) has no tasks" %(getNameByUUID(se_service.uuid), se_service.uuid))
             print('')
             
         return
