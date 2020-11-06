@@ -26,11 +26,14 @@ The following webpages have been used to help with Python and bluepy coding:
 
 ## Current status of the gateway using bluepy
 - Connection between a single nRF52 and the Raspberry Pi has been fully established and tested. Any program that utilizes BLE loaded to the nRF52 can be controlled by the Raspberry Pi as long as the correct "Complete Local Name" is specified. Note: you may need to (manually) add specific services and/or task (characteristics) to my_ble_names dictonary when the software on the nRF52 is updated.
-- The BLE_network class can be used to ease the use of the bluepy libray. This is tested and fully working. Yet, a first version for BLE network control has to be made.
+- The BLE_network class can be used to ease the use of the bluepy libray. This is tested and working. Currently, read values from tasks are only printed and not yet saved.
+- A main file for controller the ble_network is tested and working. Currently, the written value to tasks is a static value and these are written every 15 seconds.
 
 ## To-do list
 programming:
-- Create a first version for BLE network control.
+- Update save_tasks so that the read values are saved in the local_storage (instead of only printed).
+- Update write_tasks so that the 'write-value' from the local_storage is written (instead of a static value).
+- Update main_control file so that the 'write-value' is only written when needed (instead of every 15 seconds).
 
 resreach:
 - Research into whether BLE mesh is possible using the type of bluetooth pairing bluepy makes use of.
