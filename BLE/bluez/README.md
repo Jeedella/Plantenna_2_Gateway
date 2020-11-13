@@ -46,7 +46,7 @@ bluez:
 - Research into the specific meaning and syntax of steps 10 to 13 in the bluez mesctl with Zephyr guide; and
 - Research into the useability of all other commands from meshctl (after starting meshctl type 'help' in all menus).
 
-# 2 methods to use bluez
+## 2 methods to use bluez
 Method 1 bluez meshctl:
 - Staring meshctl, as described in [How to start bluez meshctl](#-How-to-start-bluez-meshctl); and
 - Using bluez as described in Chapter 3 and onwards of "Tutorial-How-to-set-up-BlueZ_Part2-3.pdf.pdf" and in "Step-by-step-guide-meshctl-with-Zephyr.pdf".\
