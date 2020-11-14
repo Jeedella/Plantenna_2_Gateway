@@ -33,7 +33,6 @@ The following webpages have been used to help with Python and bluepy coding:
 programming:
 - Update save_tasks so that the read values are saved in the local_storage (instead of only printed).
 - Update write_tasks so that the 'write-value' from the local_storage is written (instead of a static value).
-- Update main_control file so that the 'write-value' is only written when needed (instead of every 15 seconds).
 
 resreach:
 - Research into whether BLE mesh is possible using the type of bluetooth pairing bluepy makes use of.
