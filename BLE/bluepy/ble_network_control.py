@@ -1,13 +1,12 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     November 6th, 2020                                #
-# version:  1.4                                               #
+# date:     November 14th, 2020                               #
+# version:  1.5                                               #
 #                                                             #
-# version information:                                        #
-# - Writing to tasks is now supported.                        #
-# - Add method __write_tasks_for_one_periheral()              #
-# - Remove method get_addresses()                             #
+# version info:                                               #
+# - Use function to send data to the cloud (without local     #
+#   storage)                                                  #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -17,6 +16,8 @@
 from bluepy.btle import Scanner, DefaultDelegate, Service
 from bluepy.btle import UUID, Peripheral, AssignedNumbers
 from bluepy.btle import ADDR_TYPE_PUBLIC, ADDR_TYPE_RANDOM
+import spms_cloud_control
+from spms_cloud_control import spms_mqtt_init, spms_mqtt_send_data, spms_mqtt_stop
 import sys, binascii
 
 ###################
@@ -29,7 +30,7 @@ spms_ble_names = {
     # UUID (key)                            Device type (value)
     "1a310001-63b2-0795-204f-1dda0100d29d": "spms_device",        # 128-bit UUID (not a service, not a task, it is indication)
     
-    ## availeble tasks ##
+    ## availeble tasks --> all data that was gathered while connection was lost ##
     "1a31fff1-63b2-0795-204f-1dda0100d29d": "availableTasks service", # Not used yet
     "1a31fff2-63b2-0795-204f-1dda0100d29d": "availableTasks task",    # Not used yet
     
@@ -151,12 +152,21 @@ class BLE_network:
         # Scan for (new) ble devices
         self.scan_for_new_ble_devices(device_type, scan_time)
         
+        
+        # my mqtt init
+        self.__spms_mqtt_client = spms_mqtt_init()
+        
         print('')
         return
     
     # destructor
     def __del__(self):
         '''Delete network with ID x.'''
+        # Terminate connection to cloud
+        spms_mqtt_stop(self.__spms_mqtt_client)
+        print("Connection with cloud has been terminated.")
+        
+        # BLE network has been deleted
         print("BLE network '%s' has been deleted." %self.netID)
         return
     
@@ -172,7 +182,7 @@ class BLE_network:
         
         # Check if sce_device is empty (no valid devices found)
         if len(sce_devices) == 0:
-            print("No valid devices found (searched for device name: '%s'). Make sure the device is turned on and the correct device_type is searched for." %device_type)
+            print("No valid devices found (searched for device type: '%s' (uuid=%s)). Make sure the device is turned on and the correct device_type is searched for." %(device_type, getNameByUUID(device_type)))
             print('')
             return
         
@@ -221,7 +231,9 @@ class BLE_network:
             # Display all adtype, desc and value of current device
             for (adtype, desc, value) in device.getScanData(): # adtype (flag), descriptor, value
                 if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
+                #if desc == "Complete Local Name" and value == device_type:
                     print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special print
+                    #print("  %s    %s = %s" % (hex(adtype), desc, value)) # normal print
                     
                     valid_device = True;    # Valid device is found (works only for the first device called "Nordic_Blinky"
                     print("Found valid device!")
@@ -439,12 +451,31 @@ class BLE_network:
                 if(ch_task.supportsRead()):
                     # Task is readable => Read + print value
                     val = ch_task.read()
-                    print("        Current value: %s" % binascii.b2a_hex(val))
-                    if binascii.b2a_hex(val[-1:]) >= "77": # isReady = 0xFF --> is ready to read
-                        # SAVE HERE
-                        print("        Saved! (LBS=%s)" % binascii.b2a_hex(val[-1:]))
+                    data = binascii.b2a_hex(val)
+                    print("        Current value: %s" % data)
+                    if data[-1:] >= "77": # isReady == 0xFF --> is ready to read
+                        # Send data to cloud
+                        print("        Value: %s" % data)
+                        
+                        # Only send to cloud when its spms data
+                        inDict = spms_ble_names.get(str(uuid), "Not in dict")
+                        
+                        if inDict is not "Not in dict":
+                            print_spms_data(data)
+                            
+                            temp     = float.fromhex(data[8:12])/100
+                            humid    = float.fromhex(data[12:16])/100
+                            pressure = float.fromhex(data[16:20])
+                            
+                            print(temp, humid, pressure)
+                            
+                            spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
+                            #save_data(peripheral.addr, val)
+                        
+                        # Print that data is saved
+                        print("        Saved! (LBS=%s)" % binascii.b2a_hex(data[-1:]))
                     else: # ignore read value, because isRead = 0x00 (< 0x77) --> is not ready to read
-                        print("        Ignored! (LBS=%s)" % binascii.b2a_hex(val[-1:]))
+                        print("        Ignored! (LBS=%s)" % binascii.b2a_hex(data[-1:]))
 
                 else:
                     # Not readable
@@ -595,3 +626,19 @@ def getNameByUUID(uuid):
     '''Return the name (str) of a uuid. If the uuid is listed in the bluepy Assigned Numbers list or spms_ble_names list it will be a human-readable name. Otherwise, it returns the given uuid (str).
     (bluepy Assignment Numbers (str) can be found here: https://ianharvey.github.io/bluepy-doc/assignednumbers.html#assignednumbers)'''
     return spms_ble_names.get(str(uuid), UUID(uuid).getCommonName())
+
+def print_spms_data(data):
+    '''Print all data of spms devices
+    data must be a string of hexadecimal values'''
+    print("Manufactures specific size    = %s" % data[0:2])   # sz = 1 byte
+    print("AD type manufacture specific  = %s" % data[2:4])   # sz = 1
+    print("Company ID                    = %s" % data[4:8])   # sz = 2
+    
+    print("Temperature ('C)       (x100) = %s" % data[8:12])  # sz = 2
+    print("Humidity (%%RH)         (x100) = %s" % data[12:16]) # sz = 2
+    print("Pressure (hPa)                = %s" % data[16:20]) # sz = 2
+    print("Battery voltage (mV)   (/ 20) = %s" % data[20:22]) # sz = 1
+    
+    print("Status register               = %s" % data[22:24]) # sz = 1
+    print("Airlfow (mm/s)                = %s" % data[24:28]) # sz = 2
+    print("Is ready                      = %s" % data[28:30]) # sz = 1
