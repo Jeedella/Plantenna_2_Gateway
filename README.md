@@ -10,6 +10,6 @@ The main control of the gateway is performed by main_control.py. This python scr
 ## Current status
 - Can control BLE network and send data to cloud.
 
-### To-do list
+## To-do list
 - Add local storage to main control
 - Update main_control in such a way that the 'write-value' is only written when needed (instead of every 15 seconds).
