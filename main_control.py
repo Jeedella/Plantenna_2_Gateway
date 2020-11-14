@@ -1,11 +1,11 @@
 ###############################################################
-# main_network_control.py                                     #
+# main_control.py                                             #
 # author:   Frank Arts                                        #
 # date:     November 14th, 2020                               #
-# version:  1.2                                               #
+# version:  1.2.1                                             #
 #                                                             #
 # version info:                                               #
-# - Put main code in main() function.                         #
+# - Rename file to main_control.py                            #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
