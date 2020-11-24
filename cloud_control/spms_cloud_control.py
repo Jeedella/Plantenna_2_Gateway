@@ -16,8 +16,8 @@ import json
 from time import sleep
 
 # global variables
-THINGSBOARD_HOST = 'ec2-18-156-208-13.eu-central-1.compute.amazonaws.com'
-ACCESS_TOKEN = 'zbwdc6FbMo4hsCblUvXP'
+THINGSBOARD_HOST = 'plantenna.nl'
+ACCESS_TOKEN = 'UrC7JgzqMi0OONA8FtFe'
 
 INTERVAL = 2
 
