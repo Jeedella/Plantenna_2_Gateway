@@ -1,11 +1,11 @@
 ###############################################################
 # main_control.py                                             #
 # author:   Frank Arts                                        #
-# date:     November 14th, 2020                               #
-# version:  1.2.1                                             #
+# date:     November 24th, 2020                               #
+# version:  1.2.2                                             #
 #                                                             #
 # version info:                                               #
-# - Rename file to main_control.py                            #
+# - Clean up.                                                 #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -69,40 +69,10 @@ def main(argv):
         
         p_peripherals = my_ble_network.get_peripherals()
         
-    #     
-    #     service_uuid = []
-    #     task_uuid =[]
-    #     
-    #     for p in p_peripherals:
-    #         
-    #         for se_service in p.getServices():
-    #             if se_service.uuid == "1a310701-63b2-0795-204f-1dda0100d29d":
-    #                 service_uuid.append(se_service.uuid)
-    #             
-    #             for ch_task in se_service.getCharacteristics():
-    #                 task_uuid.append(ch_task.uuid)
 
         # read all tasks
         while 1: # Continues loop
             currTime = time.time()
-            '''    
-            # Read multiple times within 60 seconds (= update time of sensor in nodes)
-            if currTime - prevTime_read >= 10:
-                # Read BLE tasks
-                readBLEtasks(None, "00001800-0000-1000-8000-00805f9b34fb", "00002aa6-0000-1000-8000-00805f9b34fb")
-                
-                # Update prevTime for reading
-                prevTime_read = currTime
-                
-            
-            # Write
-            if currTime - prevTime_write >= 12: # For testing: write every 15 seconds
-                # Write 0xAA to BLE task
-                writeBLEtasks("\xAB", None, "00001827-0000-1000-8000-00805f9b34fb", "00002adb-0000-1000-8000-00805f9b34fb")
-                
-                # Update prevTime for writing
-                prevTime_write = 999999999999#currTime
-            '''
             
             # Read multiple times within 10 seconds (= update time of sensor in nodes)
             if currTime - prevTime_read >= 5:
