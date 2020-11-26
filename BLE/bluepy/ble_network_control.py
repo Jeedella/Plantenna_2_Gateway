@@ -35,12 +35,29 @@ spms_ble_names = {
     "1a31fff2-63b2-0795-204f-1dda0100d29d": "availableTasks task",    # Not used yet
     
     
-    ## Services ##
-    # UUID (key)                            Service name (value)
-    "1a310701-63b2-0795-204f-1dda0100d29d": "Portable Airflow service",
+    ## myAir ##
+    # UUID (key)                            Service/task name (value) 
+    "1a310101-63b2-0795-204f-1dda0100d29d": "Portable Profile Finedust service",
+    "1a310102-63b2-0795-204f-1dda0100d29d": "Portable Profile Finedust task",
     
-    ## Tasks/Characteristics ##
-    # UUID (key)                            Task name (value)
+    "1a310201-63b2-0795-204f-1dda0100d29d": "Portable Profile CO2 service",
+    "1a310202-63b2-0795-204f-1dda0100d29d": "Portable Profile CO2 task",
+    
+    "1a310301-63b2-0795-204f-1dda0100d29d": "Portable Profile NH3 service",
+    "1a310302-63b2-0795-204f-1dda0100d29d": "Portable Profile NH3 task",
+    
+    "1a310401-63b2-0795-204f-1dda0100d29d": "Fixed Profile Finedust service",
+    "1a310402-63b2-0795-204f-1dda0100d29d": "Fixed Profile Finedust task",
+    
+    "1a310501-63b2-0795-204f-1dda0100d29d": "Fixed Profile CO2 service",
+    "1a310502-63b2-0795-204f-1dda0100d29d": "Fixed Profile CO2 task",
+    
+    "1a310601-63b2-0795-204f-1dda0100d29d": "Fixed Profile NH3 service",
+    "1a310602-63b2-0795-204f-1dda0100d29d": "Fixed Profile NH3 task",
+    
+    ## SPMS ##
+    # UUID (key)                            Service/task name (value)
+    "1a310701-63b2-0795-204f-1dda0100d29d": "Portable Airflow service",
     "1a310702-63b2-0795-204f-1dda0100d29d": "Portable Airflow task",
 }
 
