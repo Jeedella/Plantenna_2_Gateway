@@ -41,8 +41,8 @@ sudo pip3 install mysql-connector-python
 ```
 run
 ```
-pip search mysql-connector | grep --color mysql-connector-python
-pip install mysql-connector-python-rf
+sudo pip3 search mysql-connector | grep --color mysql-connector-python
+sudo pip3 install mysql-connector-python-rf
 ```
 because it may be that the connector has issues accessing the database if not created in this way.
 
