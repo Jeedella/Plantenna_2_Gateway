@@ -22,6 +22,9 @@ note that the text will not show up when typing, as with most linux passwords.
 now to create the database, we run the commands(note that in mysql you need to send the ';' for the command to execute):
 ````
 create database plantenna;
+
+use plantenna;
+
 create table Sensor_data (
 number int not null auto_increment primary key,
 temperature int(3),
