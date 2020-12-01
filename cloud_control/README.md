@@ -20,9 +20,25 @@ paho.mqtt.client:
 sudo pip install paho-mqtt
 ```
 
-## Current status
-- spms_cloud_control.py can be used to submit BME sensor data to ThingsBoard. For more information on the cloud storage itself, please refer to the [cloud repository](https://github.com/Jeedella/Plantenna_2_Cloud). It can be either used as a stand alone or within other scripts.
-- spms_cloud_control.py is used in the main_control.py script. Here, the gathered data over BLE is send to the cloud using MQTT.
+## Initialize the MQTT communication
+To send data through the MQTT protocol, it is necessary to configure a few parameters:
+**THINGSBOARD_HOST=**'*your url here*'
+This can be an IP address or URL of where your Thingsboard instance is running
+**ACCESS_TOKEN=**'*your device token here*'
+This is the token generated when creating a device on Thingsboard. This token can be copied and is valid for one device.
 
-## To-do list
-- Among other things, add 'write control' to spms_cloud_control.py. With 'write control', the user can write to one or multiple nodes.
+## Sending data
+To send data, a library name paho-mqtt is used. This is a python library which makes mqtt communication possible. More info about this library, please refer to [paho-mqtt website](https://pypi.org/project/paho-mqtt/)
+Sending data is done using the *publish* command
+This command contains the location to where the data is published, and the data itself.
+```client.publish('v1/devices/me/telemetry', json.dumps(**your function**), 1)```
+
+## Current status
+It is possible to receive data from the NRF52 and show it on the Thingsboard Dashboard. 
+For more info about data visualisation please refer to the [Plantenna Cloud Repository](https://github.com/Jeedella/Plantenna_2_Cloud)
+
+## ToDo
+Add reverse communication functionality, which subscribes to the dashboard and listens if any commands are generated.
+Remote Firmware updates
+Script for device registration
+
