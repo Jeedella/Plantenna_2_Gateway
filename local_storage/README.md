@@ -11,8 +11,9 @@ This works by saving the data as strings of text separated by a comma. This file
 
 
 ## Current status
-- TBD
+The current status is getting the database working on pi's without problems and describing the step by step to getting it working.
 
 ## To-do list
-- Update README
-- Add local storage
+- Update README2.0 for database
+- Get database working on other rpi's
+- implement database workings
