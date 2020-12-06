@@ -1,9 +1,28 @@
 import paho.mqtt.client as mqtt
 import json
+import sys
 
 THINGSBOARD_HOST = 'plantenna.nl'
 ACCESS_TOKEN = 'qYMI8cPkKJsfwveFYi4Q'
 
+class myData:
+    data = None
+
+def init():
+    global client
+    client = mqtt.Client()
+
+    client.username_pw_set(ACCESS_TOKEN)
+    # Connect to ThingsBoard using default MQTT port and 60 seconds keepalive interval
+    client.connect(THINGSBOARD_HOST, 1883, 60)
+
+    # Register connect callback
+    client.on_connect = on_connect
+    # Registed publish message callback
+    client.on_message = on_message
+    # Set access token
+    client.loop_forever()
+    return client
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, rc, *extra_params):
@@ -13,29 +32,24 @@ def on_connect(client, userdata, rc, *extra_params):
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
-    print('Topic: ' + msg.topic + '\nMessage: ' + str(msg.payload))
+    # print('Topic: ' + msg.topic + '\nMessage: ' + str(msg.payload))
     # # Decode JSON request
-    # data = json.loads(msg.payload)
-    # # Check request method
-    # if data['method'] == 'getGpioStatus':
-    #     # Reply with GPIO status
-    #     client.publish(msg.topic.replace('request', 'response'), get_gpio_status(), 1)
-    # elif data['method'] == 'setGpioStatus':
-    #     # Update GPIO status and reply
-    #     set_gpio_status(data['params']['pin'], data['params']['enabled'])
-    #     client.publish(msg.topic.replace('request', 'response'), get_gpio_status(), 1)
-    #     client.publish('v1/devices/me/attributes', get_gpio_status(), 1)
+    data = json.loads(msg.payload)
+    if data['params'] == 'reset':
+        print("I want a reset!")
+    elif data['params'] == 'restart':
+        print("I want a restart!")
+    else:
+        print("oops")
+    data = myData()
 
-client = mqtt.Client()
-# Register connect callback
-client.on_connect = on_connect
-# Registed publish message callback
-client.on_message = on_message
-# Set access token
-client.username_pw_set(ACCESS_TOKEN)
-# Connect to ThingsBoard using default MQTT port and 60 seconds keepalive interval
-client.connect(THINGSBOARD_HOST, 1883, 60)
-
-try:
-    client.loop_forever()
-except KeyboardInterrupt:
+def main():
+        try:
+            init()
+            while True:
+                print(myData)
+                sleep(2)
+        finally:
+            print("exiting program")
+if __name__ == "__main__":
+    main()
