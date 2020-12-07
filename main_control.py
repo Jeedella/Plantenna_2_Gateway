@@ -1,12 +1,11 @@
 ###############################################################
 # main_control.py                                             #
 # author:   Frank Arts                                        #
-# date:     December 4th, 2020                                #
-# version:  1.3                                               #
+# date:     December 7th, 2020                                #
+# version:  1.4                                               #
 #                                                             #
 # version info:                                               #
-# - Add support for notifications                             #
-# - Rename task to characteristic                             #
+# - Update support for notifictions                           #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -87,17 +86,15 @@ def main(argv):
             for i in range(len(p_peripherals)):
                 # test notify
                 if p_peripherals[i].waitForNotifications(timeout):
-                    print("notify received")
                     # handlenotification was called
                     continue;
                 print("Waiting...")
 
-        # read all characteristics
-        while 1: # Continues loop
+            # read all characteristics
             currTime = time.time()
             
             # Read multiple times within 10 seconds (= update time of sensor in nodes)
-            if currTime - prevTime_read >= 5:
+            if currTime - prevTime_read >= 30:
                 # Read BLE characteristics
                 readBLEcharacteristics(my_ble_network)#, None, "1a310701-63b2-0795-204f-1dda0100d29d", "1a310702-63b2-0795-204f-1dda0100d29d")
                 
@@ -117,6 +114,16 @@ def main(argv):
                 
     finally:
         print('')
+        print('')
+        
+        try:
+            # Disable notifications for all peripherals
+            print("Disabling notifications...")
+            my_ble_network.enable_notifications(enable = False)
+        finally:
+            pass
+        
+        # Goodbye
         print("Goodbye!")
         print("Disconnecting...")
 

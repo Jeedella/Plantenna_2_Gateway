@@ -1,17 +1,12 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     December 4th, 2020                                #
-# version:  1.6                                               #
+# date:     December 7th, 2020                                #
+# version:  1.7                                               #
 #                                                             #
 # version info:                                               #
-# - Add support for notifications                             #
-# - Rename task to characteristic                             #
-# - Add myAir ble names dict + update getNameByUUID()         #
-# - Update __scan_for_ble_devices() and add_peripherals()     #
-#   regarding connecting to devices                           #
-# - Add device.disconnect() to __del__() and                  #
-#   delete_peripherals()                                      #
+# - Update handelNotifictions() in class _NotifyDelegate      #
+# - Update enable_notifictions() and delete_peripherals()     #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -103,6 +98,7 @@ class _ScanDelegate(DefaultDelegate):
     def __init__(self):
         '''Initialize the _ScanDelecate class: use init of DefualtDelegate'''
         DefaultDelegate.__init__(self)
+        return
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
         '''Handle discovery for the scanEntry class'''
@@ -110,6 +106,7 @@ class _ScanDelegate(DefaultDelegate):
             print("Discovered device %s" % dev.addr)
         elif isNewData:
             print("Received new data from %s" % dev.addr)
+        return
 
 
 # NotifyDelegate class
@@ -129,17 +126,29 @@ class _NotifyDelegate(DefaultDelegate):
     def __init__(self):
         '''Initialize the _ScanDelecate class: use init of DefualtDelegate'''
         DefaultDelegate.__init__(self)
-        print("done init")
+        return
 
     def handleNotification(self, cHandle, data):
-        '''Handle notifications for the Peripherals class. For debug purpose, the method from the DefaultDelegate is used'''
-        print("new data received")
-        DefaultDelegate.handleNotification(self, cHandle, data)
-        print("new data saved: ")
-        print(data) # This must be update, because in terminal it shows an unknown vlaue->  ??(    or    ???     or    ??P
-        # See Wireshark for corect values
-        print("End of received data stream")
+        '''Handle notifications for the Peripherals class'''
+        print("Received notification from handle %s" % cHandle)
+        
+        data_hex = binascii.b2a_hex(data)
+        print("Current value: %s" % data_hex)    
+        
+        print_spms_data(data_hex)
+        
+        temp     = float.fromhex(data_hex[8:12])/100
+        humid    = float.fromhex(data_hex[12:16])/100
+        pressure = float.fromhex(data_hex[16:20])
+        
+        print(temp, humid, pressure)
+        
+        #spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
+        #save_data(peripheral.addr, val)
+        
         print("")
+        return
+
 
 
 # BLE network class
@@ -154,7 +163,7 @@ class BLE_network:
     attributes
     ----------
     All attributes below are read-only.
-    - ID
+    - netID
         Network ID
     
     methods
@@ -173,23 +182,25 @@ class BLE_network:
     - peripherals
     add_peripherals(self, peripheral_addr, addrType = ADDR_TYPE_PUBLIC, iface = None)
         Add one or mutliple peripherals
-        peripheral_addr must be of type unicode (one) or list (one or multiple)
+        peripheral_addr must be of type str/unicode (one) or list (one or multiple)
         addrType and iface must be the same for all peripherals
     
     delete_peripherals(self, peripheral_addr = None)
         Delete all peripherals or specified peripheral(s) with MAC address peripheral_addr
-        peripheral_addr must be of type None (all), unicode (one) or list (one or multiple)
+        peripheral_addr must be of type None (all) str/unicode (one) or list (one or multiple)
    
     get_peripherals(self, peripheral_addr = None)
         Return a list containing the Peripherals of all peripherals or specified peripheral(s)
-        peripheral_addr must be of type None (all), unicode (one) or list (one or multiple)
+        peripheral_addr must be of type None (all), str/unicode (one) or list (one or multiple)
     
     
     - Characteristic control
-    enable_notifications(self, peripheral = None, timeout = 2.0)
-        Enable notifications for the every specified peripheral
+    enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True)
+        Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
+        characteristic must be of type None (all) or str (one)
         timeout has a default value of 2.0 seconds
+        To disable, set enable = False
     
     read_characteristics(self, peripheral = None, service_uuid = None, characteristic_uuid = None)
         Read and save one or multiple characteristics of one or multiple peripherals
@@ -253,6 +264,7 @@ class BLE_network:
         '''Delete network with ID x.'''
         print('')
         
+        # Disconnnect from alll peripherals
         for addr, p in self.__peripherals.iteritems():
             print("Disconencting from device with MAC address %s ..." %addr)
             p.disconnect()
@@ -323,6 +335,8 @@ class BLE_network:
             
             # Display all adtype, desc and value of current device
             for (adtype, desc, value) in device.getScanData(): # adtype (flag), descriptor, value
+#                 if desc == "Complete Local Name" and value == device_type:
+#                     print("  %s    %s = %s" % (hex(adtype), desc, value)) # normal print
                 if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
                     print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special print
                     
@@ -343,11 +357,11 @@ class BLE_network:
     # peripherals
     def add_peripherals(self, peripheral_addr, addrType = ADDR_TYPE_PUBLIC, iface = None):
         '''Add one or mutliple peripherals
-        peripheral_addr must be of type unicode (one) or list (one or multiple)
+        peripheral_addr must be of type str/unicode (one) or list (one or multiple)
         addrType and iface must be the same for all peripherals'''
         
         # Convert to list
-        if (isinstance(peripheral_addr, unicode)):
+        if (isinstance(peripheral_addr, str) or isinstance(peripheral_addr, unicode)):
             peripheral_addr = [peripheral_addr]
             
             
@@ -377,17 +391,17 @@ class BLE_network:
     
     def delete_peripherals(self, peripheral_addr = None):
         '''Delete all peripherals or specified peripheral(s) with MAC address peripheral_addr
-        peripheral_addr must be of type unicode (one) or list (one or multiple)'''
+        peripheral_addr must be of type None (all) str/unicode (one) or list (one or multiple)'''
         
         # Convert to list
-        if (isinstance(peripheral_addr, unicode)):
+        if (isinstance(peripheral_addr, str) or isinstance(peripheral_addr, unicode)):
             peripheral_addr = [peripheral_addr]
             
             
         # Delete
         if (peripheral_addr == None):
-            # Remove duplicates
-            peripheral_addr = list(dict.fromkeys(peripheral_addr))
+            # Disable notifications
+            self.enable_notifications(enable = False)
             
             for addr, p in self.__peripherals.iteritems():
                 print("Disconencting from device with MAC address %s ..." %addr)
@@ -397,29 +411,38 @@ class BLE_network:
             self.__peripherals.clear()
             print("Deleted all peripherals from this network")
         elif (isinstance(peripheral_addr, list)):
+            # Remove duplicates
+            peripheral_addr = list(dict.fromkeys(peripheral_addr))
+            
             for i in range(len(peripheral_addr)):
-                not_in_list = self.__peripherals.pop(peripheral_addr[i], True)
-                if (not_in_list is not True):
-                    print("Disconencting from device with MAC address %s ..." %peripheral_addr)
-                    self.__peripherals[peripheral_addr].disconnect()
+                p = self.__peripherals.get(peripheral_addr[i], "Not in list")
+                if p != "Not in list":
+                    # Disable notifications
+                    self.enable_notifications(peripheral = p, enable = False)
+                    
+                    # Disconnect
+                    print("Disconencting from device with MAC address %s ..." %peripheral_addr[i])
+                    self.__peripherals[peripheral_addr[i]].disconnect()
                     print("Disonnecting successfull")
                     
+                    # Delete
+                    self.__peripherals.pop(peripheral_addr[i])
                     print("Deleted peripheral with MAC address %s from network" %peripheral_addr[i])
                 else:
                     print("peripheral with MAC address %s is not part of this network (network ID = %s)" %(peripheral_addr[i], self.netID))
         else:
-            print("ERROR while trying to delete peripherals: peripheral is of wrong type (type = %s). Valid types: None, Peripheral, dict (of Peripheral)" %type(peripheral))
+            print("ERROR while trying to delete peripherals: peripheral is of wrong type (type = %s). Valid types: None, unicode, str or list (of unicode/str)" %type(peripheral_addr))
         
         print('')
         return
     
     def get_peripherals(self, peripheral_addr = None):
         '''Return a list containing the Peripherals of all peripherals or specified peripheral(s)
-        peripheral_addr must be of type None (all), unicode (one) or list (one or multiple)'''
+        peripheral_addr must be of type None (all), str/unicode (one) or list (one or multiple)'''
         p = []
                 
         # Convert to list
-        if (isinstance(peripheral_addr, unicode)):
+        if (isinstance(peripheral_addr, str) or isinstance(peripheral_addr, unicode)):
             peripheral_addr = [peripheral_adddr]
             
         
@@ -443,11 +466,12 @@ class BLE_network:
 
     
     # Characteristic control
-    def enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0):
-        '''Enable notifications for the every specified peripheral
+    def enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True):
+        '''Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
         characteristic must be of type None (all) or str (one)
-        timeout has a default value of 2.0 seconds'''
+        timeout has a default value of 2.0 seconds
+        To disable, set enable = False'''
             
         # Convert to peripheral list
         if peripheral is None:
@@ -469,24 +493,30 @@ class BLE_network:
                 else:
                     # Convert to characteristic list
                     if (characteristic_uuid is None or isinstance(characteristic_uuid, str)):
-                        # with _NotifyDelegate
-                        peripheral[i].withDelegate(_NotifyDelegate())
-                        
                         ch_characteristics = peripheral[i].getCharacteristics(uuid = characteristic_uuid)
                         for j in range(len(ch_characteristics)):
-                            #if (ch_characteristics[j].properties & ch_characteristics[j].props["WRITE"]):
-                            if (ch_characteristics[j].properties & ch_characteristics[j].props["NOTIFY"]):
-                                # Enable notifications (= subcribe for notifications)
+                           if (ch_characteristics[j].properties & ch_characteristics[j].props["NOTIFY"]):
                                 handle = ch_characteristics[j].getHandle()
-                                peripheral[i].readCharacteristic(handle + 1)
-                                for k in range(10):
-                                    peripheral[i].writeCharacteristic(handle + 1, b"\x01\x00", True) # This is the CCCD, but Wireshark does't say anything about Notifications enabled
-                                    peripheral[i].readCharacteristic(handle + 1)
-                                #peripheral[i].writeCharacteristic(handle, b"\x01\x00", True) # This is the charactersitic itself. Wireshark says now: 94	27.661422	ff:49:33:22:11:cd (MACO2000)	localhost ()	ATT	13	Rcvd Handle Value Notification, Handle: 0x0011 (Unknown: Unknown)
-                                peripheral[i].readCharacteristic(handle + 1)
-                                print("Notifications enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
-                            else:
-                                print("characteristic %s of peripheral %s does not support WRITE and/or NOTIFY" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                currently_disabled = peripheral[i].readCharacteristic(handle + 1)
+                                currently_disabled = binascii.b2a_hex(currently_disabled)
+                                
+                                if enable:
+                                    if currently_disabled:
+                                        # with _NotifyDelegate
+                                        peripheral[i].withDelegate(_NotifyDelegate())
+                        
+                                        # Enable notifications
+                                        peripheral[i].writeCharacteristic(handle + 1, b"\x01\x00", True)
+                                        print("Notifications enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                    else:
+                                        print("Notifications are already enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                else:
+                                    if currently_disabled:
+                                        # Disable notifications
+                                        peripheral[i].writeCharacteristic(handle + 1, b"\x00\x00", True)
+                                        print("Notifications disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                    else:
+                                        print("Notifications are already disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
                     else:
                         print("ERROR while trying to enable notifications: characteristic_uuid is of wrong type (type = %s). Valid type: None or str" %type(characteristic_uuid))
         else:
@@ -804,3 +834,4 @@ def print_spms_data(data):
     print("Status register               = %s" % data[22:24]) # sz = 1
     print("Airlfow (mm/s)                = %s" % data[24:28]) # sz = 2
     print("Is ready                      = %s" % data[28:30]) # sz = 1
+    return
