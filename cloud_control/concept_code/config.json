@@ -1,0 +1,69 @@
+{
+    "TB_VERSION" : "v3.1.1",
+    "PAG_VERSION" : "v1.0",
+    "host" : "plantenna.nl",
+    
+    "PA001" : {
+        "DeviceName" : "PA001",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "2P0YswIskauBVegsjRR3",
+        "OWNER" : "Frank"
+    },
+
+    "PA002" : {
+        "DeviceName" : "PA002",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "RvntQNB8WjacLMUTxEJY",
+        "OWNER" : "Frank"
+    },
+
+    "PA003" : {
+        "DeviceName" : "PA003",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "ERdwkf3Oi5KgVsIDCMpN",
+        "OWNER" : "Tijn"
+    },
+
+    "PA004" : {
+        "DeviceName" : "PA004",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "nUj9fqJix7v43jIxVVox",
+        "OWNER" : "Tijn"
+    },
+
+    "PA005" : {
+        "DeviceName" : "PA005",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "pzBSaURGHTe5WkKk5whP",
+        "OWNER" : "Davinio"
+    },
+
+    "PA006" : {
+        "DeviceName" : "PA006",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "woa8l08K9dEZOhAKgKb7",
+        "OWNER" : "Stan"
+    },
+
+    "PA007" : {
+        "DeviceName" : "PA007",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "DwrYW1ErOLCPNbJ3ys9V",
+        "OWNER" : "Jonathan"
+    },
+
+    "PA008" : {
+        "DeviceName" : "PA00",
+        "MAC_ADDRESS": "",
+        "nodeVersion": "",
+        "ACCESSTOKEN" : "KRrCqvEtFsVWYOLSt7nE",
+        "OWNER" : "Reynaldo"
+    }
+}

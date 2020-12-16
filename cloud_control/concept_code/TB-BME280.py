@@ -9,7 +9,7 @@ ACCESS_TOKEN = 'qYMI8cPkKJsfwveFYi4Q'
 
 INTERVAL = 2
 
-sensor_data = {'temperature1': 0, 'humidity1': 0, 'pressure1': 0}
+sensor_data = {'temperature': 0, 'humidity': 0, 'pressure': 0}
 
 client = mqtt.Client()
 # Set access token
@@ -29,13 +29,16 @@ while True:
     calibration_params = bme280.load_calibration_params(bus, address)
     data = bme280.sample(bus, address, calibration_params)
     temperature = data.temperature
-    print (temperature)
     pressure = data.pressure
     humidity = data.humidity
+
+    print ("temperature =", temperature)
+    print ("pressure =", pressure)
+    print ("humidity =", humidity)
     # Sending humidity and temperature data to ThingsBoard
-    sensor_data['temperature2'] = temperature
-    sensor_data['pressure2'] = pressure
-    sensor_data['humidity2'] = humidity
+    sensor_data['temperature'] = temperature
+    sensor_data['pressure'] = pressure
+    sensor_data['humidity'] = humidity
     client.publish('v1/devices/me/telemetry', json.dumps(sensor_data), 1)
     sleep(2)
 
