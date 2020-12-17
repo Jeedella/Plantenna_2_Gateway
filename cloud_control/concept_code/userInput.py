@@ -5,7 +5,6 @@
 import sys
 import json
 
-
 def askForDevice():
     command = input("What do you want? Read/Register?:")
     print(command)
