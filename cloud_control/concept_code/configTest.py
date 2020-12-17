@@ -10,3 +10,4 @@ print(data['host'])
 # to read a nested object, use the following:
 print(data['PA001']['ACCESSTOKEN'])
 
+        
