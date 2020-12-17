@@ -1,12 +1,14 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     December 7th, 2020                                #
-# version:  1.7                                               #
+# date:     December 17th, 2020                               #
+# version:  1.8                                               #
 #                                                             #
 # version info:                                               #
-# - Update handelNotifictions() in class _NotifyDelegate      #
-# - Update enable_notifictions() and delete_peripherals()     #
+# - Support broadcast data receive                            #
+#                                                             #
+# To do:                                                      #
+# - Change endian of ble data to little-endian                #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -17,7 +19,7 @@ from bluepy.btle import Scanner, DefaultDelegate, Service
 from bluepy.btle import UUID, Peripheral, AssignedNumbers
 from bluepy.btle import ADDR_TYPE_PUBLIC, ADDR_TYPE_RANDOM
 import spms_cloud_control
-#from spms_cloud_control import spms_mqtt_init, spms_mqtt_send_data, spms_mqtt_stop
+from spms_cloud_control import spms_mqtt_init, spms_mqtt_send_data, spms_mqtt_stop
 import sys, binascii
 
 ###################
@@ -81,10 +83,10 @@ spms_ble_names = {
 ### Classes ###
 ###############
 
-# ScanDelegate class
-class _ScanDelegate(DefaultDelegate):
+# DeviceScanDelegate class
+class _DeviceScanDelegate(DefaultDelegate):
     '''
-    ScanDelegate class, subclass of DefaultDelegate class, provides the handleDiscovery method.
+    DeviceScanDelegate class, subclass of DefaultDelegate class, provides the handleDiscovery method.
     
     ...
     
@@ -101,11 +103,52 @@ class _ScanDelegate(DefaultDelegate):
         return
 
     def handleDiscovery(self, dev, isNewDev, isNewData):
-        '''Handle discovery for the scanEntry class'''
+        '''Handle discovery for new devices and data in the scanEntry class'''
         if isNewDev:
             print("Discovered device %s" % dev.addr)
         elif isNewData:
             print("Received new data from %s" % dev.addr)
+        return
+
+
+# DataScanDelegate class
+class _DataScanDelegate(DefaultDelegate):
+    '''
+    DataScanDelegate class, subclass of DefaultDelegate class, provides the handleDiscovery method.
+    
+    ...
+    
+    methods
+    -------
+    handleDiscovery(self, dev, isNewDev, isNewData)
+        Handle discovery for the scanEntry class
+    
+    '''
+    
+    def __init__(self):
+        '''Initialize the _ScanDelecate class: use init of DefualtDelegate'''
+        DefaultDelegate.__init__(self)
+        return
+
+    def handleDiscovery(self, dev, isNewDev, isNewData):
+        '''Handle discovery of new data in the scanEntry class'''
+        if isNewData:
+            data = None
+            for adtype, desc, val in dev.getScanData():
+                # Read dat if correct decripion
+                if desc == "Manufacturer":
+                    data = val
+                
+                # Print data if correct device/profile AND data was received
+                if val in myAir_ble_names.keys() and data is not None:
+                    # Print data
+                    print("Received new data from %s:" % dev.addr)
+                    print_ble_data(binascii.b2a_hex(data), "myAir", "LITTLE_ENDIAN")
+                    print('')
+            
+            # Save data
+            ### UPDATE me ###
+            
         return
 
 
@@ -126,6 +169,7 @@ class _NotifyDelegate(DefaultDelegate):
     def __init__(self):
         '''Initialize the _ScanDelecate class: use init of DefualtDelegate'''
         DefaultDelegate.__init__(self)
+        self.__spms_mqtt_client = spms_mqtt_init()
         return
 
     def handleNotification(self, cHandle, data):
@@ -135,16 +179,16 @@ class _NotifyDelegate(DefaultDelegate):
         data_hex = binascii.b2a_hex(data)
         print("Current value: %s" % data_hex)    
         
-        print_spms_data(data_hex)
+#         save_ble_data(data_hex, LITTLE_ENDIAN)
         
-        temp     = float.fromhex(data_hex[8:12])/100
-        humid    = float.fromhex(data_hex[12:16])/100
-        pressure = float.fromhex(data_hex[16:20])
-        
-        print(temp, humid, pressure)
-        
-        #spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
-        #save_data(peripheral.addr, val)
+#         print_spms_data(data_hex)
+#         
+#         temp     = float.fromhex(data_hex[8:12])/100
+#         humid    = float.fromhex(data_hex[12:16])/100
+#         pressure = float.fromhex(data_hex[16:20])
+#         
+#         print(temp, humid, pressure)
+#         spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
         
         print("")
         return
@@ -195,13 +239,6 @@ class BLE_network:
     
     
     - Characteristic control
-    enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True)
-        Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
-        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
-        characteristic must be of type None (all) or str (one)
-        timeout has a default value of 2.0 seconds
-        To disable, set enable = False
-    
     read_characteristics(self, peripheral = None, service_uuid = None, characteristic_uuid = None)
         Read and save one or multiple characteristics of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
@@ -225,6 +262,24 @@ class BLE_network:
         value must be of type str
         peripheral must be of type Peripheral
         service_uuid and characteristic_uuid must be of type None (all), str/unicode (one) or list (one or multiple)
+    
+    - Delegates
+    enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True)
+        Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
+        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
+        characteristic must be of type None (all) or str (one)
+        timeout has a default value of 2.0 seconds
+        To disable, set enable = False
+        
+    enable_broadcast_data_receive(self, enable = True)
+        Enable/Disable receiving of broadcast data
+        To disable, set enable = False
+    
+    receive_broadcast_data(self, timeout = 10)
+        If new data is availabe, receive broadcast data (must be enabled before)
+        stops when timeout is reached and may be called multiple times when broadcast data is enabled
+        this method must be called continuously if broadcastdata can't be missed
+        NOTE: _DataScanDelegete.handleDiscovery() is called when data is received
     
     ------
 
@@ -253,7 +308,10 @@ class BLE_network:
         
         
         # my mqtt init
-        #self.__spms_mqtt_client = spms_mqtt_init()
+        self.__spms_mqtt_client = spms_mqtt_init()
+        
+        # Reset broadcastDataReceiveEnabled
+        self.__broadcastDataReceiveEnabled = False
         
         
         print('')
@@ -271,7 +329,7 @@ class BLE_network:
             print("Disconnecting successfull")
         
         # Terminate connection to cloud
-        #spms_mqtt_stop(self.__spms_mqtt_client)
+        spms_mqtt_stop(self.__spms_mqtt_client)
         print("Connection with cloud has been terminated.")
         
         # BLE network has been deleted
@@ -303,7 +361,7 @@ class BLE_network:
             else:
                 # Non duplicate
                 response = raw_input("Do you want to connect to device with MAC address %s? [y/N] " % sce_device.addr).lower()
-                if response == "y" or response == "yes": # Accapted connection
+                if response == "y" or response == "yes": # Accepted connection
                     print("Connecting to device with MAC address %s" % sce_device.addr)
                     self.add_peripherals(sce_device.addr, sce_device.addrType, sce_device.iface)
                 else: # Declined connection
@@ -323,7 +381,7 @@ class BLE_network:
             print("ERROR while trying to scan for ble devices: device_type is not specified. Please try again.")
             return
         
-        scanner = Scanner().withDelegate(_ScanDelegate())
+        scanner = Scanner().withDelegate(_DeviceScanDelegate())
         sc_devices = scanner.scan(scan_time)    # Scan for specified time (in seconds) default = 10.0 seconds
 
         # Create empty list of sce_devices (objects of ScanEntry class)
@@ -335,10 +393,10 @@ class BLE_network:
             
             # Display all adtype, desc and value of current device
             for (adtype, desc, value) in device.getScanData(): # adtype (flag), descriptor, value
-#                 if desc == "Complete Local Name" and value == device_type:
-#                     print("  %s    %s = %s" % (hex(adtype), desc, value)) # normal print
-                if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
-                    print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special print
+                if desc == "Complete Local Name" and value == device_type:
+                    print("  %s    %s = %s" % (hex(adtype), desc, value)) # normal print
+#                 if desc == "Complete 128b Services" and getNameByUUID(value) == device_type:
+#                     print("  %s    %s = %s (uuid=%s)" % (hex(adtype), desc, getNameByUUID(value), value)) # special print
                     
                     valid_device = True;    # Valid device is found (works only for the first device called "Nordic_Blinky"
                     print("Found valid device!")
@@ -466,65 +524,6 @@ class BLE_network:
 
     
     # Characteristic control
-    def enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True):
-        '''Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
-        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
-        characteristic must be of type None (all) or str (one)
-        timeout has a default value of 2.0 seconds
-        To disable, set enable = False'''
-            
-        # Convert to peripheral list
-        if peripheral is None:
-            peripheral = self.__peripherals.values()
-        elif isinstance(peripheral, Peripheral):
-            peripheral = [peripheral]
-            
-        
-        # Handle notifications
-        if (isinstance(peripheral, list)):
-            # Remove duplicates
-            peripheral = list(dict.fromkeys(peripheral))
-            
-            for i in range(len(peripheral)):
-                addr = self.__peripherals.get(peripheral[i].addr, "not in list")
-                if (addr == "not in list"):
-                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %(peripheral[i].addr, self.netID))
-                    print("Notifications for this peripheral will not be enabled")
-                else:
-                    # Convert to characteristic list
-                    if (characteristic_uuid is None or isinstance(characteristic_uuid, str)):
-                        ch_characteristics = peripheral[i].getCharacteristics(uuid = characteristic_uuid)
-                        for j in range(len(ch_characteristics)):
-                           if (ch_characteristics[j].properties & ch_characteristics[j].props["NOTIFY"]):
-                                handle = ch_characteristics[j].getHandle()
-                                currently_disabled = peripheral[i].readCharacteristic(handle + 1)
-                                currently_disabled = binascii.b2a_hex(currently_disabled)
-                                
-                                if enable:
-                                    if currently_disabled:
-                                        # with _NotifyDelegate
-                                        peripheral[i].withDelegate(_NotifyDelegate())
-                        
-                                        # Enable notifications
-                                        peripheral[i].writeCharacteristic(handle + 1, b"\x01\x00", True)
-                                        print("Notifications enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
-                                    else:
-                                        print("Notifications are already enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
-                                else:
-                                    if currently_disabled:
-                                        # Disable notifications
-                                        peripheral[i].writeCharacteristic(handle + 1, b"\x00\x00", True)
-                                        print("Notifications disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
-                                    else:
-                                        print("Notifications are already disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
-                    else:
-                        print("ERROR while trying to enable notifications: characteristic_uuid is of wrong type (type = %s). Valid type: None or str" %type(characteristic_uuid))
-        else:
-            print("ERROR while trying to enable notifications: peripheral is of wrong type (type = %s). Valid type: None, Peripheral or list" %type(peripheral))
-        
-        print('')
-        return
-    
     def read_characteristics(self, peripheral = None, service_uuid = None, characteristic_uuid = None):
         '''Read and save one or multiple characteristics of one or multiple peripherals
         peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
@@ -647,7 +646,7 @@ class BLE_network:
                         inDict = spms_ble_names.get(str(uuid), "Not in dict")
                         
                         if inDict is not "Not in dict":
-                            print_spms_data(data)
+                            print_ble_data(data, "spms", "LITTLE_ENDIAN")
                             
                             temp     = float.fromhex(data[8:12])/100
                             humid    = float.fromhex(data[12:16])/100
@@ -655,7 +654,7 @@ class BLE_network:
                             
                             print(temp, humid, pressure)
                             
-                            #spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
+                            spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
                             #save_data(peripheral.addr, val)
                         
                         # Print that data is saved
@@ -797,6 +796,101 @@ class BLE_network:
                     print("        Characteristic '%s' (uuid=%s) is not writable" %(getNameByUUID(ch_characteristic.uuid), ch_characteristic.uuid))
         
         return
+    
+    # Delegate
+    def enable_notifications(self, peripheral = None, characteristic_uuid = None, timeout = 2.0, enable = True):
+        '''Enable/Disable notifications for the specified characteristic(s) on the specified peripheral(s)
+        peripheral must be of type None (all), Peripheral (one) or list (one or multiple)
+        characteristic must be of type None (all) or str (one)
+        timeout has a default value of 2.0 seconds
+        To disable, set enable = False'''
+            
+        # Convert to peripheral list
+        if peripheral is None:
+            peripheral = self.__peripherals.values()
+        elif isinstance(peripheral, Peripheral):
+            peripheral = [peripheral]
+            
+        
+        # Handle notifications
+        if (isinstance(peripheral, list)):
+            # Remove duplicates
+            peripheral = list(dict.fromkeys(peripheral))
+            
+            for i in range(len(peripheral)):
+                addr = self.__peripherals.get(peripheral[i].addr, "not in list")
+                if (addr == "not in list"):
+                    print("peripheral with MAC address %s is not part of this network (network ID = %s)" %(peripheral[i].addr, self.netID))
+                    print("Notifications for this peripheral will not be enabled")
+                else:
+                    # Convert to characteristic list
+                    if (characteristic_uuid is None or isinstance(characteristic_uuid, str)):
+                        ch_characteristics = peripheral[i].getCharacteristics(uuid = characteristic_uuid)
+                        for j in range(len(ch_characteristics)):
+                           if (ch_characteristics[j].properties & ch_characteristics[j].props["NOTIFY"] and ch_characteristics[j].uuid != "00002a19-0000-1000-8000-00805f9b34fb"):
+                                handle = ch_characteristics[j].getHandle()
+                                currently_disabled = peripheral[i].readCharacteristic(handle + 1)
+                                currently_disabled = binascii.b2a_hex(currently_disabled)
+                                
+                                if enable:
+                                    if currently_disabled:
+                                        # with _NotifyDelegate
+                                        peripheral[i].withDelegate(_NotifyDelegate())
+                        
+                                        # Enable notifications
+                                        peripheral[i].writeCharacteristic(handle + 1, b"\x01\x00", True)
+                                        print("Notifications enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                    else:
+                                        print("Notifications are already enabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                else:
+                                    if currently_disabled:
+                                        # Disable notifications
+                                        peripheral[i].writeCharacteristic(handle + 1, b"\x00\x00", True)
+                                        print("Notifications disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                                    else:
+                                        print("Notifications are already disabled for characteristic %s on peripheral %s" %(ch_characteristics[j].uuid, peripheral[i].addr))
+                    else:
+                        print("ERROR while trying to enable notifications: characteristic_uuid is of wrong type (type = %s). Valid type: None or str" %type(characteristic_uuid))
+        else:
+            print("ERROR while trying to enable notifications: peripheral is of wrong type (type = %s). Valid type: None, Peripheral or list" %type(peripheral))
+        
+        print('')
+        return
+        
+        
+    def enable_broadcast_data_receive(self, enable = True):
+        '''Enable/Disable receiving of broadcast data
+        To disable, set enable = False'''
+        
+        # Enable/Disable
+        if enable == True and self.__broadcastDataReceiveEnabled == False:
+            self.broadcastDataReceiveScanner = Scanner().withDelegate(_DataScanDelegate())
+            self.broadcastDataReceiveScanner.start()
+            self.__broadcastDataReceiveEnabled = True
+            print("Broadcast data receive is enabled.")
+        elif enable == False and self.__broadcastDataReceiveEnabled == True:
+            self.broadcastDataReceiveScanner.stop()
+            self.__broadcastDataReceiveEnabled = False
+            print("Broadcast data receive is disabled.")
+                    
+        print('')
+        return
+    
+    def receive_broadcast_data(self, timeout = 10):
+        '''If new data is availabe, receive broadcast data (must be enabled before)
+        stops when timeout is reached and may be called multiple times when broadcast data is enabled
+        this method must be called continuously if broadcastdata can't be missed
+        NOTE: _DataScanDelegete.handleDiscovery() is called when data is received'''
+        
+        if self.__broadcastDataReceiveEnabled == True:
+            self.broadcastDataReceiveScanner.process(timeout = timeout)
+            print('')
+            print("Checking for new broadcast data...")
+        else:
+            print("ERROR: Braodcast receive is not enabled. Enabled with: BLE_network.enable_broadcast_data_receive(enable = True).")
+            print('')
+        
+        return
 
 
 ########################
@@ -819,19 +913,60 @@ def getNameByUUID(uuid):
         
     return name
 
-def print_spms_data(data):
-    '''Print all data of spms devices
+
+def save_ble_data(data, endian = "LITTLE_ENDIAN"):
+    '''Save ble data in database
+    endian can be either LITTLE_ENDIAN or BIG_ENDIAN'''
+    endian = endian.upper()
+    
+    # Check endian
+    if endian == "LITTLE_ENDIAN":
+        # Convert data to BIG_ENDIAN
+        
+        edndian = "BIG_ENDIAN"
+    
+    if endian == "BIG_ENDIAN":
+        # Save data in database
+        ## UPDATE ME ##
+        pass
+        
+    else:
+        print("Endian is not correct. Allowed endians: LITTLE_ENDIAN or BIG_ENDIAN" %endian)
+    
+
+def print_ble_data(data, devType = "SPMS", endian = "LITTLE_ENDIAN"):
+    '''Print all data of devices
+    devType specifies how to data should be sperated. Allowed types are spms and myAir
     data must be a string of hexadecimal values'''
-    print("Manufactures specific size    = %s" % data[0:2])   # sz = 1 byte
-    print("AD type manufacture specific  = %s" % data[2:4])   # sz = 1
-    print("Company ID                    = %s" % data[4:8])   # sz = 2
     
-    print("Temperature ('C)       (x100) = %s" % data[8:12])  # sz = 2
-    print("Humidity (%%RH)         (x100) = %s" % data[12:16]) # sz = 2
-    print("Pressure (hPa)                = %s" % data[16:20]) # sz = 2
-    print("Battery voltage (mV)   (/ 20) = %s" % data[20:22]) # sz = 1
+    devType = devType.upper()
+    endian = endian.upper()
     
-    print("Status register               = %s" % data[22:24]) # sz = 1
-    print("Airlfow (mm/s)                = %s" % data[24:28]) # sz = 2
-    print("Is ready                      = %s" % data[28:30]) # sz = 1
+    if endian == "LITTLE_ENDIAN":
+        # Convert to big endian
+        
+        endian = "BIG_ENDIAN"
+        pass
+    
+    if endian == "BIG_ENDIAN":
+        if devType == "SPMS" or devType == "MYAIR":
+            print("Manufactures specific size    = %s" % data[0:2])   # sz = 1 byte
+            print("AD type manufacture specific  = %s" % data[2:4])   # sz = 1
+            
+            print("Company ID                    = %s" % data[4:8])   # sz = 2
+            
+            print("Temperature ('C)       (x100) = %s" % data[8:12])  # sz = 2
+            print("Humidity (%%RH)         (x100) = %s" % data[12:16]) # sz = 2
+            print("Pressure (hPa)                = %s" % data[16:20]) # sz = 2
+            
+            if devType == "SPMS":
+                print("Battery voltage (mV)   (/ 20) = %s" % data[20:22]) # sz = 1
+                
+                print("Status register               = %s" % data[22:24]) # sz = 1
+            
+                print("Airlfow (mm/s)                = %s" % data[24:28]) # sz = 2
+                print("Is ready                      = %s" % data[28:30]) # sz = 1
+            elif devType == "MYAIR":
+                print("Device specific data          = %s" % data[24:]) # sz = device specific
     return
+
