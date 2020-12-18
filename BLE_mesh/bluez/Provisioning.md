@@ -31,7 +31,7 @@ discover-unprovisioned on
 Replace \<Device UUID\> with the corresponding device UUID of your device.\
 The Device UUID should look similar to this: 34ab739aa2f000000000000000000000
 ```
-provision \<Device UUID\>
+provision <Device UUID>
 ```
 
 5. Possible key verification
@@ -39,7 +39,7 @@ Only do this when prompted to specify a key. Replace \<key\> with your key.\
 This key can be an OOB key or an ASCII key and could be found in the terminal of your device.\
 An ASCII key should look similar to this: 851IR7K.
 ```
-<\key\>
+<key>
 ```
 After this step, the meshctl command line should look simular to the following.\
 The name of your device should be there instead of Zephyr.
