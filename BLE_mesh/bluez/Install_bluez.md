@@ -1,7 +1,7 @@
 # Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE network based on bluez - Installing bluez and dependencies
 ## Installing bluez
 Install bluez using the commands in the steps below. These steps are based on: ["Tutorial-How-to-set-up-BlueZ.pdf"](Tutorial-How-to-set-up-BlueZ.pdf).\
-Note that v5.50 is used during development of this project. If you whish to use other version of bluez, check the availeble versions on [the bluez website](www.bleuz.org). With other version of bluez, it may be possible that the json-c and ell version must change as well. Note that meshctl must be present in your version of bluez.
+Note that v5.50 is used during development of this project. If you whish to use other version of bluez, check the available versions on [the bluez website](http://www.bluez.org/). With other version of bluez, it may be possible that the json-c and ell version must change as well. Note that meshctl must be present in your version of bluez.
 1. Install dependencies of bluez:
 ```
 sudo apt-get install -y git bc libusb-dev libdbus-1-dev libglib2.0-dev libudev-dev libical-dev libreadline-dev autoconf
@@ -57,18 +57,18 @@ bluetoothd -v
 meshctl -v
 ```
 
-8. Rebuild the kernel for bluez v5.50
-8.1 Install kernal building dependencies
+8. Rebuild the kernel for bluez v5.50\
+8.1. Install kernal building dependencies
 ```
 sudo apt-get install -y git bc bison flex libssl-dev
 ```
-8.2 Check out building tool and souce code
+8.2. Check out building tool and souce code
 ```
 cd ~
 wget https://github.com/raspberrypi/linux/archive/raspberrypi-kernel_1.20190709-1.tar.gz
 tar -xvf raspberrypi-kernel_1.20190709-1.tar.gz
 ```
-8.3 Configure the kernel
+8.3. Configure the kernel
 ```
 cd ~
 cd ./linux-raspberrypi-kernel_1.20190709-1/
@@ -89,7 +89,7 @@ In the pop-up menu, select the folowing items:
 - Cryptographic API → CMAC support
 - Cryptographic API → User-space interface for hash algorithms
 - Cryptographic API → User-space interface for symmetric key cipher algorithms
-8.4 Build and install the kernel, modules, and device tree blobs
+8.4. Build and install the kernel, modules, and device tree blobs
 This step may take 2 to 3 hours.
 ```
 make -j4 zImage modules dtbs
