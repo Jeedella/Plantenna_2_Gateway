@@ -3,7 +3,7 @@ This README shows the current status of the gateway using bluez, the to-do list 
 For the installation of bluez and provisioning of devices refer to the specific readme files (see below).
 
 ## Function of Raspberry pi gateway
-The Raspberry pi is not be part of the BLE mesh network, but is used as provisioner for the BLE mesh network. This is be done using meshctl of [bluez](bluez.org).
+The Raspberry pi is not be part of the BLE mesh network, but is used as provisioner for the BLE mesh network. This is be done using meshctl of [bluez](http://www.bluez.org/).
 To communicate with the BLE mesh network, there is an other gateway between the Raspberry pi gateway and the BLE mesh network. The Raspberry pi uses standard BLE to communicate with the other gateway. Also, the Raspberry pi is still be used as gateway to the cloud. It is still possible to use the Raspberry pi as gateway for other networks, but will not be further discussed here.\
 
 More information:
