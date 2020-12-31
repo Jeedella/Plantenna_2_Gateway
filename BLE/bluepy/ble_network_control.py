@@ -1,14 +1,12 @@
 ###############################################################
 # ble_network_control.py                                      #
 # author:   Frank Arts                                        #
-# date:     December 17th, 2020                               #
-# version:  1.8                                               #
+# date:     December 31st, 2020                               #
+# version:  1.9                                               #
 #                                                             #
 # version info:                                               #
-# - Support broadcast data receive                            #
-#                                                             #
-# To do:                                                      #
-# - Change endian of ble data to little-endian                #
+# - Data is no longer converted in handleDiscovery            #
+# - Convert endian of ble data to little-endian               #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
@@ -143,7 +141,7 @@ class _DataScanDelegate(DefaultDelegate):
                 if val in myAir_ble_names.keys() and data is not None:
                     # Print data
                     print("Received new data from %s:" % dev.addr)
-                    print_ble_data(binascii.b2a_hex(data), "myAir", "LITTLE_ENDIAN")
+                    print_ble_data(data, "myAir", "LITTLE_ENDIAN")
                     print('')
             
             # Save data
@@ -921,9 +919,20 @@ def save_ble_data(data, endian = "LITTLE_ENDIAN"):
     
     # Check endian
     if endian == "LITTLE_ENDIAN":
-        # Convert data to BIG_ENDIAN
+        # Convert unicode to list (via string)
+        data = list(str(data))
+        print(data)
         
-        edndian = "BIG_ENDIAN"
+        # Convert to big endian
+        for i in range(0, len(data), 4):
+            tmp           = data[i:i+2]
+            data[i:i+2]   = data[i+2:i+4]
+            data[i+2:i+4] = tmp
+        
+        endian = "BIG_ENDIAN"
+        
+        # Convert back to string
+        data = ''.join(data)
     
     if endian == "BIG_ENDIAN":
         # Save data in database
@@ -942,11 +951,22 @@ def print_ble_data(data, devType = "SPMS", endian = "LITTLE_ENDIAN"):
     devType = devType.upper()
     endian = endian.upper()
     
+    
     if endian == "LITTLE_ENDIAN":
+        # Convert unicode to list (via string)
+        data = list(str(data))
+        print(data)
+        
         # Convert to big endian
+        for i in range(0, len(data), 4):
+            tmp           = data[i:i+2]
+            data[i:i+2]   = data[i+2:i+4]
+            data[i+2:i+4] = tmp
         
         endian = "BIG_ENDIAN"
-        pass
+        
+        # Convert back to string
+        data = ''.join(data)
     
     if endian == "BIG_ENDIAN":
         if devType == "SPMS" or devType == "MYAIR":

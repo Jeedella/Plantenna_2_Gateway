@@ -1,14 +1,11 @@
 ###############################################################
 # main_control.py                                             #
 # author:   Frank Arts                                        #
-# date:     December 17th, 2020                               #
-# version:  1.5                                               #
+# date:     December 31st, 2020                               #
+# version:  1.6                                               #
 #                                                             #
 # version info:                                               #
-# - Support broadcast data receive                            #
-#                                                             #
-# To do:                                                      #
-# - Change endian of ble data to little-endian                #
+# - Convert endian of ble data to little-endian               #
 #                                                             #
 # NOTES:                                                      #
 # - Mesh networks are not supported                           #
