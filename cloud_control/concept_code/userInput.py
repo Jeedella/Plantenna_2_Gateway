@@ -26,9 +26,9 @@ def readCommand():
 
 
 def writeCommand():
-    objectType = input("standard or nested: ")
+    objectType = input("Single or Nested: ")
     if objectType == "standard":
-        addObject = input("add object? yes/no ")
+        addObject = input("Register object? yes/no ")
         if addObject == "yes":
             objectName = input("give object name ")
             objectValue = input("give object value ")
@@ -37,17 +37,21 @@ def writeCommand():
         }
 
     elif objectType == "nested":
-        addObject = input("add object? yes/no: ")
+        addObject = input("Register object? yes/no: ")
         if addObject == "yes":
             objectName = input("give object name: ")
-            addNestedObject = input("add nested object? yes/no: ")
-            if addNestedObject == "yes":
-                nestedObjectName = input("give nested object name: ")
-                nestedObjectValue = input("give nested object value: ")
+            deviceName = input("give the device name: ")
+            deviceMAC = input("give the mac address of the device: ")
+            deviceVersion = input("give the device software version: ")
+            deviceToken = input("give the device access token: ")
             x = {}
             x[objectName] = []
             x[objectName] = {
-                nestedObjectName: nestedObjectValue
+                objectName: objectName,
+                "DeviceName" : deviceName,
+                "MAC_ADDRESS" : deviceMAC,
+                "nodeVersion" : deviceVersion,
+                "ACCESSTOKEN" : deviceToken
             }
 
     with open("testConfig.json", "r+") as config_file:

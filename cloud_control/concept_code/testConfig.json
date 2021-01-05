@@ -7,5 +7,43 @@
     },
     "PA500": {
         "PA500": "1234"
+    },
+    "PA010": {
+        "PA010": "100"
+    },
+    "PA222": {
+        "PA222": "PA222",
+        "DeviceName": "PA222",
+        "MAC_ADDRESS": "11:22:33:44",
+        "nodeVersion": "V1",
+        "ACCESSTOKEN": "2222"
+    },
+    "PA333": {
+        "PA333": "PA333",
+        "DeviceName": "PA333",
+        "MAC_ADDRESS": "111",
+        "nodeVersion": "V2",
+        "ACCESSTOKEN": "453"
+    },
+    "pa22": {
+        "pa22": "pa22",
+        "DeviceName": "2",
+        "MAC_ADDRESS": "2",
+        "nodeVersion": "2",
+        "ACCESSTOKEN": "2"
+    },
+    "11": {
+        "11": "11",
+        "DeviceName": "33",
+        "MAC_ADDRESS": "44",
+        "nodeVersion": "22",
+        "ACCESSTOKEN": "55"
+    },
+    "22": {
+        "22": "22",
+        "DeviceName": "11",
+        "MAC_ADDRESS": "44",
+        "nodeVersion": "22",
+        "ACCESSTOKEN": "11"
     }
 }
