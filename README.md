@@ -9,7 +9,8 @@ The main control of the gateway is performed by main_control.py. This python scr
 NOTE: When both broadcast data and notify/read/write are active, broadcast data and/or notify messages can be missid (see [to-do list](#To-do-list) below).
 
 ## Current status
-- Can control BLE network and send data to cloud.
+- Can control BLE network: Discover devices, add/remove devices, send data, receive data via read/notify/broadcast.
+- Send data to cloud.
 
 ## To-do list
 - Add local storage to main control
