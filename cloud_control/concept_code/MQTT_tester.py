@@ -35,6 +35,7 @@ def main():
         device_data['BatteryLevel'] = batterylevel 
         
         client.publish('v1/devices/me/telemetry', json.dumps(device_data), 1)
+        print(device_data)
         sleep(1)
 
 
