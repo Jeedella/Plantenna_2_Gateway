@@ -18,7 +18,6 @@ client.username_pw_set(ACCESS_TOKEN)
 # Connect to ThingsBoard using default MQTT port and 60 seconds keepalive interval
 client.connect(THINGSBOARD_HOST, 1883, 60)
 
-
 client.loop_start()
 
 port = 1
@@ -42,7 +41,6 @@ while True:
     client.publish('v1/devices/me/telemetry', json.dumps(sensor_data), 1)
     sleep(2)
 
-client.publish()
 client.loop_stop()
 client.disconnect()
 
