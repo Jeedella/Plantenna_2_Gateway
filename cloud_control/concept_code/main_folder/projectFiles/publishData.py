@@ -1,5 +1,12 @@
+#Author: Omar Mhaouch
+#Date: 26-01-2021
+#Last updated: 26-01-2021
+
+#This script is used to send the data coming from the NRF to the dashboard.
+#This script is purely to send data. The connection is handled in mqttConnect.py
+
+
 import paho.mqtt.client as mqtt
-import sys
 from time import sleep
 import json
 
@@ -23,15 +30,11 @@ def publishData(client, temperature, humidity, pressure, airflow, batterylevel):
     deviceData['Airflow'] = airflow
     deviceData['BatteryLevel'] = batterylevel
 
-    client.publish('v1/devices/me/telemetry', json.dumps(deviceData), 1)
-
-# if __name__ == "__main__":
-    # init()
-    # INIT()
-    # loadConfigData()
-    # token1 = getToken("PA001")
-    # token2 = getToken("PA002")   
-    # client1 = mqttConnectDevice("PA001", token1, 0)
-    # client2 = mqttConnectDevice("PA002", token2, 0)
-    # publishData(client1, 22, 10, 100, 50, 70, 45)
+    try:
+        client.publish('v1/devices/me/telemetry', json.dumps(deviceData), 1)
+    except Exception as e:
+        print(f"Could not publish data, {e}")
+        
+if __name__ == "__main__":
+    init()
 
