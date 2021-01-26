@@ -17,7 +17,7 @@ from time import sleep
 
 # global variables
 THINGSBOARD_HOST = 'plantenna.nl'
-ACCESS_TOKEN = 'UrC7JgzqMi0OONA8FtFe'
+ACCESS_TOKEN = 'qYMI8cPkKJsfwveFYi4Q'
 
 INTERVAL = 2
 
