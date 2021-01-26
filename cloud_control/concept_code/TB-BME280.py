@@ -1,3 +1,10 @@
+# Author: Omar Mhaouch
+# Date: 26-01-2021
+# Last updated: 26-01-2021
+
+# This script is used to send data from the BME280- sensor to the cloud.
+# This sensor contains Temperature, Humidity and Pressure
+	
 import smbus2
 import bme280
 import paho.mqtt.client as mqtt

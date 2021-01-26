@@ -1,3 +1,9 @@
+# Author: Omar Mhaouch
+# Date: 5-1-2021
+# Last updated: 26-01-2021
+
+# This script is used to test random data which is sent to the dashboard.
+
 import paho.mqtt.client as mqtt
 import sys
 import json

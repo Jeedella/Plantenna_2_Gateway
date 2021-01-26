@@ -1,13 +1,24 @@
+# Author: Omar Mhaouch
+# Date: 26-01-2021
+# Last updated: 26-01-2021
+
+# This script is used to handle incoming messages from the cloud.
+# These are controls which are needed from the user.
+
 import paho.mqtt.client as mqtt
 import json
 import sys
+from time import sleep
 
+# Initialize the dashboard variables
 THINGSBOARD_HOST = 'plantenna.nl'
 ACCESS_TOKEN = 'qYMI8cPkKJsfwveFYi4Q'
+
 
 class myData:
     data = None
 
+# Initialize the MQTT connection
 def init():
     global client
     client = mqtt.Client()
