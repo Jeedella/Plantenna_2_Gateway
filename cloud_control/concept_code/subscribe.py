@@ -12,7 +12,7 @@ from time import sleep
 
 # Initialize the dashboard variables
 THINGSBOARD_HOST = 'plantenna.nl'
-ACCESS_TOKEN = 'qYMI8cPkKJsfwveFYi4Q'
+ACCESS_TOKEN = '2P0YswIskauBVegsjRR3'
 
 
 class myData:
@@ -51,7 +51,7 @@ def on_message(client, userdata, msg):
     elif data['params'] == 'restart':
         print("I want a restart!")
     else:
-        print("oops")
+        print("Something went wrong")
     data = myData()
 
 def main():
