@@ -1,6 +1,6 @@
 # Author: Omar Mhaouch
 # Date: 26-01-2021
-# Last updated: 26-01-2021
+# Last updated: 27-01-2021
 
 # This script is used to send incoming data from the NRF to the cloud. 
 # This is the main script which should be runned.
@@ -9,10 +9,7 @@
 from projectFiles import *
 from time import sleep
 import random
-
 # Initialize dictionary to save the clients
-global clients
-clients = {}
 
 # Initialize
 INIT()
@@ -37,6 +34,8 @@ def pubData(clientValue, t, h, p, a, b):
 # Create the connection
 conDevice("PA001")
 conDevice("PA002")
+
+
 
 while True:
     # Generate random data to simulate the function

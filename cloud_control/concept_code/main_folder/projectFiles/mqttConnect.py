@@ -7,6 +7,7 @@
 # the correct credentials
 
 
+from .sub import on_connect, on_message
 import paho.mqtt.client as mqtt
 import json
 from time import sleep
@@ -51,6 +52,8 @@ def mqttConnectDevice(client, token):
         client = mqtt.Client()
         client.username_pw_set(token)
         client.connect(THINGSBOARD_HOST, 1883, 60)
+        client.on_connect = on_connect
+        client.on_message = on_message
         client.loop_start()
         connected = True
         if connected == True:
