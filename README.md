@@ -6,7 +6,7 @@ Throughout this project, the Raspberry Pi 4 is used as gateway.
 
 ## main control
 The main control of the gateway is performed by main_control.py. This python script uses bluepy for BLE network control, and MQTT to send data to the cloud. In later updates a local storage and 'write control' will be added. With 'write control', the user can write to one or multiple nodes.\
-NOTE: When both broadcast data and notify/read/write are active, broadcast data and/or notify messages can be missid (see [to-do list](#To-do-list) below).
+NOTE: When both broadcast data and notify/read/write are active, broadcast data and/or notify messages can be missed (see [to-do list](#To-do-list) below).
 
 ## Current status
 - Can control BLE network: Discover devices, add/remove devices, send data, receive data via read/notify/broadcast.

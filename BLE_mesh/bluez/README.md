@@ -1,4 +1,4 @@
-# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE network based on bluez
+# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE mesh network based on bluez
 This README shows the current status of the gateway using bluez, the to-do list and 2 methods of using bluez.\
 For the installation of bluez and provisioning of devices refer to the specific readme files (see below).
 

@@ -1,4 +1,4 @@
-# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE network based on bluez - Provisioning
+# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE mesh network based on bluez - Provisioning
 ## How to use bluez meshctl for provisioning
 When bluez is installed correctly, meshctl can be found in the folder bluez-5.50/mesh. Please replace 5.50 with your version of bluez.\
 For more details on these steps, see the step-by-step guide with pictures ["Step-by-step-guide-meshctl-with-Zephyr.pdf"](Step-by-step-guide-meshctl-with-Zephyr.pdf). The program Zephyr.hex was running on the nRF5-DK and PuTTY was installed on a Windows 10 laptop.

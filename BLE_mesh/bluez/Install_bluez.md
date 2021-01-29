@@ -1,4 +1,4 @@
-# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE network based on bluez - Installing bluez and dependencies
+# Project Smart Plant Monitoring System - Raspberry Pi Gateway - BLE mesh network based on bluez - Installing bluez and dependencies
 ## Installing bluez
 Install bluez using the commands in the steps below. These steps are based on: ["Tutorial-How-to-set-up-BlueZ.pdf"](Tutorial-How-to-set-up-BlueZ.pdf).\
 Note that v5.50 is used during development of this project. If you whish to use other version of bluez, check the available versions on [the bluez website](http://www.bluez.org/). With other version of bluez, it may be possible that the json-c and ell version must change as well. Note that meshctl must be present in your version of bluez.
