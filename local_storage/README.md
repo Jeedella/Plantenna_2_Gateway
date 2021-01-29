@@ -1,6 +1,7 @@
 # Project Plant Sensing System - Raspberry Pi Gateway - local storage
 In this release we use a mysql database as local storage. The mysql database stores the data read through BLE from the NRF, and stores it on a database.
 If there is connection to the cloud, the data stored on the database is then pushed to the cloud, and afterwards deleted from the database. 
+note that this release is for python 2.7
 
 before installing anything remember to run 
 ```
@@ -45,7 +46,12 @@ in order to acces the database with python code we need to install a connector. 
 sudo pip install mysql-connector-python
 ```
 
-
+to test local storage run
+```
+sudo python local_database.py
+``` 
+if the file is run from python 3 it will not work. The rest of the project has been done with python 2.7 which is the reason the code
+for the local database is also in python 2.7
 
 
 ## Current status
