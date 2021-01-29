@@ -1,13 +1,12 @@
 # Project Plant Sensing System - Raspberry Pi Gateway - local storage
-In the first release we will save the data from the pi in a .csv file.
-This is stored as a string of text that can be accessed.
-an example of the way this works is in localstoragecsv.py
+In this release we use a mysql database as local storage. The mysql database stores the data read through BLE from the NRF, and stores it on a database.
+If there is connection to the cloud, the data stored on the database is then pushed to the cloud, and afterwards deleted from the database. 
 
-this is not properly integrated but we will focus on the implementation of the database in the future.
-If the database ends up not being an optimal solution we can always come back and integrate the csv.
-This works by saving the data as strings of text separated by a comma. This file would be easily viewable using excel or similiar programs since it is a csv.
-
-
+before installing anything remember to run 
+```
+sudo apt update
+sudo apt upgrade
+```
 
 
 ## Current status
