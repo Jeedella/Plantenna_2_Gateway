@@ -36,9 +36,10 @@ This command contains the location to where the data is published, and the data 
 ## Current status
 It is possible to receive data from the NRF52 and show it on the Thingsboard Dashboard. 
 For more info about data visualisation please refer to the [Plantenna Cloud Repository](https://github.com/Jeedella/Plantenna_2_Cloud)
+Reverse communication from the cloud is implemented. This is called the subscribe function.
+Registering devices is now also fully implemented. 
 
 ## ToDo
-Add reverse communication functionality, which subscribes to the dashboard and listens if any commands are generated.
 Remote Firmware updates
-Script for device registration
+
 
