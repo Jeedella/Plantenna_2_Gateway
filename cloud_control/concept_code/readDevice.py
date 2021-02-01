@@ -45,7 +45,7 @@ def readNestedObject(configData):
 # Load the config data
 def loadConfigData():
     try:
-        with open("config.json", 'r') as config_file:
+        with open("main_folder/config/"+"config.json", 'r') as config_file:
             data = json.load(config_file)
         return data
     except Exception as e:

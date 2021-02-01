@@ -9,7 +9,11 @@
         "PA500": "1234"
     },
     "PA010": {
-        "PA010": "100"
+        "PA010": "PA010",
+        "DeviceName": "PA010",
+        "MAC_ADDRESS": "11:22:33:44",
+        "nodeVersion": "V1.0",
+        "ACCESSTOKEN": "abcdefgh"
     },
     "PA222": {
         "PA222": "PA222",

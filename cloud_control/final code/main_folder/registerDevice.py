@@ -1,6 +1,8 @@
 # Author Omar Mhaouch
 # 5-1-2021
 
+# last updated: 1-2-2021
+
 # This script is written to read and register devices
 # that work for the smart plant monitoring system
 
@@ -34,7 +36,7 @@ def registerDevice():
             "ACCESSTOKEN": deviceToken
         }
         #open the config file
-        with open("testConfig.json", "r+") as config_file:
+        with open("config/config.json", "r+") as config_file:
             data = json.load(config_file) #load the file
             data.update(x) #update the file with the dictionary
             config_file.seek(0) #set cursor to 0
