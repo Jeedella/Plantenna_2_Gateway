@@ -19,6 +19,7 @@ More information:
 ## To-do list
 - Create a script (possably python) to ease the use of provisioning nodes; and
 - Research into methods to use the Raspberry pi within the BLE mesh network.
+- Once the BT Mesh nodes are ready, test if the RPi can provision those nodes.
 
 ## 2 methods to use bluez
 Method 1 bluez meshctl:
