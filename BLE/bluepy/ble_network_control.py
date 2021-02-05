@@ -13,6 +13,8 @@
 ###############################################################
 
 # import
+
+import local_database
 from bluepy.btle import Scanner, DefaultDelegate, Service
 from bluepy.btle import UUID, Peripheral, AssignedNumbers
 from bluepy.btle import ADDR_TYPE_PUBLIC, ADDR_TYPE_RANDOM
@@ -645,14 +647,18 @@ class BLE_network:
                         
                         if inDict is not "Not in dict":
                             print_ble_data(data, "spms", "LITTLE_ENDIAN")
+
+##                            send_data_to_database(data)
+##                            temperature = int(data[8:12], 16)
+##                            humidity = int(data[12:16], 16)
+##                            batV = int(data[20:22], 16)
+##                            pressure = int(data[16:20])
+##                            status = int(data[22:24])
+##                            airflow = int(data[24:28])
+##                            print(temperature, humidity, batV, pressure, airflow)
+##                            local_database.insert_data(temperature, humidity, batV, airflow, pressure)
+##                            spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure, batV, airflow)
                             
-                            temp     = float.fromhex(data[8:12])/100
-                            humid    = float.fromhex(data[12:16])/100
-                            pressure = float.fromhex(data[16:20])
-                            
-                            print(temp, humid, pressure)
-                            
-                            spms_mqtt_send_data(self.__spms_mqtt_client, temp, humid, pressure)
                             #save_data(peripheral.addr, val)
                         
                         # Print that data is saved
@@ -970,6 +976,7 @@ def print_ble_data(data, devType = "SPMS", endian = "LITTLE_ENDIAN"):
     
     if endian == "BIG_ENDIAN":
         if devType == "SPMS" or devType == "MYAIR":
+            
             print("Manufactures specific size    = %s" % data[0:2])   # sz = 1 byte
             print("AD type manufacture specific  = %s" % data[2:4])   # sz = 1
             
@@ -988,5 +995,57 @@ def print_ble_data(data, devType = "SPMS", endian = "LITTLE_ENDIAN"):
                 print("Is ready                      = %s" % data[28:30]) # sz = 1
             elif devType == "MYAIR":
                 print("Device specific data          = %s" % data[24:]) # sz = device specific
+##            temperature = float(int(data[8:12], 16))/100
+##            humidity = float(int(data[12:16], 16))/100
+##            batV = float(int(data[20:22], 16))*20
+            send_data_to_database(data)
+            database_data = local_database.return_data()
+            for result in database_data:
+                date = str(result[6].date())
+                time = str(result[6].time())
+                temperature = float(result[1])/100
+                humidity = float(result[2])/100
+                batV = float(result[3])*20
+                airflow = float(result[4])
+                pressure = float(result[5])
+                spms_mqtt_client = spms_cloud_control.spms_mqtt_init()
+                flag = 0
+                
+                while(1):
+                    if (spms_mqtt_client != False):
+                        flag = 1
+                        try:
+                            spms_cloud_control.spms_mqtt_send_data(spms_mqtt_client, temperature, humidity, pressure, batV, airflow, date, time)
+                            sleep(1)
+                            
+                        except:
+                            break
+                    else:
+                        break
+
+                if flag == 1:
+                    local_database.remove_data(result[0])
+                    flag = 0
+                
+##                    if (spms_mqtt_client != False):
+##                        try:
+##                            spms_cloud_control.spms_mqtt_send_data(spms_mqtt_client, temperature, humidity, pressure, batV, airflow, date, time)
+##                            sleep(1)
+##                        except:
+##                            break
+##                    else:
+##                        break
+            
+            
+            
     return
 
+def send_data_to_database(data):
+    temperature = int(data[8:12], 16)
+    humidity = int(data[12:16], 16)
+    batV = int(data[20:22], 16)
+    pressure = int(data[16:20], 16)
+    status = int(data[22:24], 16)
+    airflow = int(data[24:28], 16)
+    local_database.insert_data(temperature, humidity, batV, airflow, pressure)
+    
