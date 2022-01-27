@@ -19,38 +19,37 @@ def Init(): # Initialise UART link
     serialCom = serial.Serial('/dev/ttyACM0', 115200, timeout = 1) #change '/dev/ttyACM0' to name for nrf
     serialCom.reset_input_buffer()
 
-def GetTransmission(): # Get transmitted data and convert into dictionary
+def GetData(): # Get transmitted data and convert into dictionary
     transmitedData = serialCom.readline().decode('utf-8').rstrip()
+    return transmitedData
 
-    if (transmitedData == "nd\n"):
-        serialCom.write("ok\n") # acknowledge that it is ready to receive data
-    else:
-        convertedVal = json.loads(transmitedData) # Dictionary conversion
-        return convertedVal
+def SendData(message):
+    serialCom.write(message + "\n")
+
+def ConvertJson(data):
+    convertedVal = json.loads(data) # Dictionary conversion
+    return convertedVal
 
 def StoreData(transmitedData): # Get dictionary of gata and tramsfer it to database 
+    
     if bool(transmitedData):
         latestData = Communication(transmitedData["id"], transmitedData["time"], transmitedData["temperature"], transmitedData["humidity"], transmitedData["pressure"], transmitedData["battery"], transmitedData["airflow"]) # Get dictionary data and save it into class=
         local_database.insert_data(latestData.temperature, latestData.humidity, latestData.battery, latestData.airflow, latestData.pressure, latestData.id)
-        serialCom.write("dn\n") # acknowledgement that data was received correctly
-        return 1
-    else:
-        return 0
+        SendData("dn") # acknowledgement that data was received correctly
 
 if __name__ == '__main__':
     Init()
 
     while True:
-        valid = 0
 
-        if serialCom.in_waiting > 0:
+        if (serialCom.in_waiting > 0):
+            data = GetData()
 
-           while(not valid): # Loops data transmission untill data sent is valid
-               try:
-                    data = GetTransmission()
-                    valid = StoreData(data)
-               finally:
-                    break
+            if (data == "nd"):
+                SendData("ok")
+            else:    
+                jsonData = ConvertJson(data)
+                StoreData(jsonData)
         else:
             time.sleep(5) # Sleeps if there is no data to receive
                 
