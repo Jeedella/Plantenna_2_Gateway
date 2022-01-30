@@ -6,8 +6,8 @@ import time
 import local_database
 
 class Communication:
-    def __init__(self, time, temperature, humidity, pressure, battery, airflow):
-        self.id = 0
+    def __init__(self, id, time, temperature, humidity, pressure, battery, airflow):
+        self.id = id
         self.time = time
         self.temperature = temperature
         self.humidity = humidity
@@ -34,7 +34,7 @@ def ConvertJson(data):
 def StoreData(transmitedData): # Get dictionary of gata and tramsfer it to database 
     
     if bool(transmitedData):
-        latestData = Communication(transmitedData["time"], transmitedData["temp"], transmitedData["humi"], transmitedData["pres"], transmitedData["batt"], transmitedData["airf"]) # Get dictionary data and save it into class=
+        latestData = Communication(transmitedData["time"], transmitedData["temp"], transmitedData["humi"], transmitedData["pres"], transmitedData["batt"], transmitedData["airf"], transmitedData["nodeID"]) # Get dictionary data and save it into class=
         local_database.insert_data(latestData.temperature, latestData.humidity, latestData.battery, latestData.airflow, latestData.pressure, latestData.id)
         SendData("dn") # acknowledgement that data was received correctly
 
